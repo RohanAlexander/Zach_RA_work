@@ -1,4 +1,8 @@
+clear all
+
 set more off
+
+use "/hdir/0/monicah/Desktop/EIbrothers18921924.dta"
 
 //Separate origin based on the first comma
 split origin, generate(origin) parse(,) limit(2)
@@ -89,6 +93,7 @@ replace origin_country = "Italy" if (origin_country == "Italy Italy") | (origin_
 replace origin_country = "Ireland" if (origin_country == "Iireland")
 replace origin_country = "Jamaica" if (origin_country == "Ja") | (origin_country == "Jamacia")
 replace origin_country = "Lithuania" if (origin_country == "Lithuan") 
+replace origin_country = "Netherlands" if (origin_country == "Netherland") | (origin_country == "Holland")
 replace origin_country = "Norway" if (origin_country == "Nor")
 replace origin_country = "Palestine" if (origin_country == "Palestina") | (origin_country == "Palistine")
 replace origin_country = "Panama" if (origin_country == "Republic Of Panama") | (origin_country == "R Of P")
@@ -133,20 +138,26 @@ replace origin_city = origin_city_tmp
 drop origin_country_tmp
 drop origin_city_tmp
 
-// Fix remaining messy countries; 
+// Fix remaining messy countries (these are more than just typos - possible errors introduced here)
+// 
 tab origin_country, sort
 // The cities of all these countries need to be checked before going through with the change; tab origin_city if (origin_country == "COUNTRY"), sort
+
 // Galicia is a legit historical area even though not a country anymore, but should not be separate to Galicy
-replace origin_country = "Galicia" if (origin_country == "Galicy") 
+replace origin_country = "Galicia" if (origin_country == "Galicy") | (origin_country == "Galizia") 
 // Reassemble the Czech Republic
 replace origin_country = "Czech Republic" if (origin_country == "Bohemia") | (origin_country == "Moravia") ///
-	| (origin_country == "Cz Slov") | (origin_country == "Czechoslovakia") ///
-	| (origin_country == "Slovakia") | (origin_country == "Cz Slovak") 
+	| (origin_country == "Cz Slov") | (origin_country == "Czechoslovakia") | (origin_country == "Cz Sl") ///
+	| (origin_country == "Slovakia") | (origin_country == "Cz Slovak") | (origin_country == "Czechosl") ///
+	| (origin_country == "Czecho Slovakia") | (origin_country == "Czslov") | (origin_country == "Czechosl") ///
+	| (origin_country == "Silesia") | (origin_country == "Cz-Sl")
 // Change country of origin from Nfld to Canada
 replace origin_country = "Canada" if (origin_country == "Nfld") 
 // Change country of origin from various US states to United States
 replace origin_country = "United States" if (origin_country == "Ny") | (origin_country == "Pa") ///
-	| (origin_country == "Ill") | (origin_country == "Mass") | (origin_country == "Nj")
+	| (origin_country == "Ill") | (origin_country == "Mass") | (origin_country == "Nj") ///
+	| (origin_country == "N Y") | (origin_country == "Ohio") | (origin_country == "New York") ///
+	| (origin_country == "Conn") | (origin_country == "Mich")
 // Change country of origin from an Italian state to Italy
 replace origin_country = "Italy" if (origin_country == "Palermo") | (origin_country == "Caserta") ///
 	| (origin_country == "Salerno") | (origin_country == "Cosenza") | (origin_country == "Sicily") ///
@@ -155,85 +166,51 @@ replace origin_country = "Italy" if (origin_country == "Palermo") | (origin_coun
 	| (origin_country == "Catanzaro") | (origin_country == "Potenza") | (origin_country == "Roma") ///
 	| (origin_country == "Catania") | (origin_country == "Aquila") | (origin_country == "Siracusa") ///
 	| (origin_country == "Benevento") | (origin_country == "Campobasso") | (origin_country == "Chieti") ///
-	| (origin_country == "Foggia") | (origin_country == "Lucca") | (origin_country == "Chieti") ///
+	| (origin_country == "Foggia") | (origin_country == "Lucca") | (origin_country == "Caltanissetta") ///
+	| (origin_country == "Genova") | (origin_country == "Udine") | (origin_country == "Teramo") ///
+	| (origin_country == "Naples") | (origin_country == "Pesaro") | (origin_country == "Reggio C") ///
+	| (origin_country == "Torino") | (origin_country == "Reggio") | (origin_country == "Treviso") ///
+	| (origin_country == "Vicenza") | (origin_country == "Alessandria") | (origin_country == "Aguila") ///
+	| (origin_country == "Ancona") | (origin_country == "Novara") 
 // Reassemble Yugoslavia (SR Bosnia and Herzegovina, SR Croatia, SR Macedonia, SR Montenegro, SR Slovenia, and SR Serbia)
-replace origin_country = "Yugoslavia" if (origin_country == "Jugoslavia") | (origin_country == "Yougoslavia")
+replace origin_country = "Yugoslavia" if (origin_country == "Jugoslavia") | (origin_country == "Yougoslavia") ///
+	| (origin_country == "Jugosl") | (origin_country == "Jugoslav") | (origin_country == "Slovenia") 
 // Change Minsk to Belarus
-replace origin_country = "Belarus" if (origin_country == "Minsk")
+replace origin_country = "Belarus" if (origin_country == "Minsk") | (origin_country == "Grodno")
 // Fix the name of Trinidad
 replace origin_country = "Trinidad and Tobago" if (origin_country == "Trinidad")
 // Fix the name of Romania
-replace origin_country = "Romania" if (origin_country == "Roum")
+replace origin_country = "Romania" if (origin_country == "Roum") | (origin_country == "Rumania") /// 
+	| (origin_country == "Rouman")
 // Fix the name of Hungary
 replace origin_country = "Hungary" if (origin_country == "Hung")
 // Fix the name of Lithuania
-replace origin_country = "Lithuania" if (origin_country == "Kowno")
-
-
-
-tab origin_city if (origin_country == ""), sort
+replace origin_country = "Lithuania" if (origin_country == "Kowno") | (origin_country == "Wilna") ///
+	| (origin_country == "Lith")
+// Fix the name of Turkey
+replace origin_country = "Turkey" if (origin_country == "Turkey E")
+// Fix the name of Tunisia
+replace origin_country = "Tunisia" if (origin_country == "Africa") & (origin_city == "Tunis")
+// Fix the name of South Africa
+replace origin_country = "South Africa" if (origin_country == "Africa") & ((origin_city == "Johannesburg") | (origin_city == "Cape Town"))
+// Fix the name of Egypt
+replace origin_country = "Egypt" if (origin_country == "Africa") & ((origin_city == "Alexandria") | (origin_city == "Cairo"))
+// Fix the name of Netherlands
+replace origin_country = "Netherlands" if (origin_country == "Holl")
+// Fix the name of Russia
+replace origin_country = "Russia" if (origin_country == "Samara")
+// Fix the name of Switzerland
+replace origin_country = "Switzerland" if (origin_country == "Swiss")
+// Fix the name of Slovenia
+replace origin_country = "Slovenia" if (origin_country == "Carniola")
+// Make Shs and S H S consistent
+replace origin_country = "S H S" if (origin_country == "Shs")
 
 
 ////////UP TO HERE - CLEAN THESE ONES NEXT
-                       Russ |        231        0.07       88.51
-                        Chile |        230        0.07       88.58
-                Caltanissetta |        227        0.07       88.65
-                          N Y |        226        0.07       88.72
-                       Panama |        220        0.07       88.79
-                        Udine |        218        0.07       88.86
-                   Montenegro |        206        0.07       88.93
-                       Czslov |        200        0.06       88.99
-                     Turkey E |        200        0.06       89.05
-                       Teramo |        187        0.06       89.11
-                         Ohio |        179        0.06       89.17
-                       Pesaro |        178        0.06       89.23
-                          Shs |        178        0.06       89.28
-                     New York |        176        0.06       89.34
-                 South Africa |        175        0.06       89.40
-                         Conn |        169        0.05       89.45
-                      Rumania |        165        0.05       89.50
-                       Jugosl |        160        0.05       89.55
-                     Reggio C |        160        0.05       89.60
-                        Egypt |        159        0.05       89.65
-                      Silesia |        159        0.05       89.70
-                       Torino |        158        0.05       89.75
-                   Costa Rica |        156        0.05       89.80
-                        Cz Sl |        154        0.05       89.85
-                       Genova |        153        0.05       89.90
-                        Wolyn |        152        0.05       89.95
-                     Bulgaria |        151        0.05       90.00
-                      Treviso |        147        0.05       90.04
-                    Palestine |        146        0.05       90.09
-                     Jugoslav |        145        0.05       90.14
-                     Czechosl |        143        0.05       90.18
-                        Wilna |        143        0.05       90.23
-                    Macedonia |        141        0.04       90.27
-                   Netherland |        140        0.04       90.32
-                       Reggio |        139        0.04       90.36
-                        S H S |        139        0.04       90.40
-                        Haiti |        135        0.04       90.45
-                  Alessandria |        131        0.04       90.49
-              Czecho Slovakia |        127        0.04       90.53
-                         Mich |        127        0.04       90.57
-                      Armenia |        125        0.04       90.61
-                         Kiew |        124        0.04       90.65
-                      Vicenza |        121        0.04       90.69
-                      Galizia |        120        0.04       90.72
-                       Africa |        119        0.04       90.76
-                       Persia |        118        0.04       90.80
-                         Holl |        114        0.04       90.83
-                        Cz-Sl |        113        0.04       90.87
-                         Lith |        113        0.04       90.91
-                        Malta |        113        0.04       90.94
-                       Samara |        113        0.04       90.98
-                       Ancona |        112        0.04       91.01
-                       Aguila |        111        0.04       91.05
-                       Grodno |        109        0.03       91.08
-                       Novara |        107        0.03       91.12
-                       Naples |        103        0.03       91.15
-                       Rouman |        103        0.03       91.18
-                     Slovenia |        103        0.03       91.22
-                      Albania |        100        0.03       91.25
+tab origin_city if (origin_country == "Kiew"), sort
+DONT KNOW WHAT TO DO WITH 'Russ' or 'S H S' or 'Wolyn' or 'Kiew'
+
 
 
 
