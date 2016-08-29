@@ -1,9 +1,22 @@
+//////////////////////// Preamble ////////////////////////
 // Author: Rohan Alexander
 // Contact: rohan.alexander@anu.edu.au 
-// Description: TO ADD
+/* Description: The point of this script is to clean data. At the moment the focus 
+is on cleaning locations of origin. The location starts as a string that may have 
+comma separators that may help. The initial split is done on the comma and that 
+gets you a decent amount of the way. Some of the strings have the country first 
+then the city (rather than the majority which are the opposite) so you need to 
+swap those. Then some don't have a country, despite having a city or state and 
+so those need to be cleaned. 
+This would actually be a really good problem for machine learning and it will be 
+interesting to see if this can be implemented once this project is done and 
+provided for others as an R package. Seems like a common problem for historians, 
+and an extension of the package could be to specify your time period of interest 
+so not all being pushed to modern.
+*/
 
 
-//////////////////////// Initial set up and load data
+//////////////////////// Initial set up and load data ////////////////////////
 clear all
 
 set more off, permanently
@@ -11,7 +24,7 @@ set more off, permanently
 use "/hdir/0/monicah/Desktop/EIbrothers18921924.dta"
 
 
-//////////////////////// Start separating the cities and countries
+//////////////////////// Start separating the cities and countries ////////////////////////
 //Separate origin based on the first comma
 split origin, generate(origin) parse(,) limit(2)
 rename origin1 origin_city
@@ -31,7 +44,7 @@ replace origin_country = strproper(origin_country)
 replace origin_city = strproper(origin_city)
 
 
-//////////////////////// Typos in the cities names
+//////////////////////// Typos in the cities names ////////////////////////
 //Clean some typos in the cities names
 replace origin_city = "Ascoli Piceno" if (origin_city == "Ascoli P") ///
 	| (origin_city == "Ascoli Pi")
@@ -84,7 +97,7 @@ replace origin_city = "USA" if (origin_city == "U S A") ///
 	| (origin_city == "America") | (origin_city == "Usa")
 
 
-//////////////////////// Swap countries and cities as appropriate
+//////////////////////// Swap countries and cities as appropriate ////////////////////////
 // Fix the cases where the country and the city have been swapped - swap the country and city columns
 // drop origin_country_tmp
 // drop origin_city_tmp
@@ -125,13 +138,15 @@ local list_of_countries `" `list_of_countries' "United States" "Galicia" "'
 foreach country of local list_of_countries {
 	quietly replace is_country_flag = 1 if (origin_country == "`country'") 
 }
-//drop is_country_flag
+// drop is_country_flag
 
 //////////////////////// Fix remaining messy countries (some of these are more than just typos - possible errors introduced here)
 // Use this to list the countries that need to be looked at
 // tab origin_country if missing(is_country_flag), sort
 // The cities of all these countries need to be checked before going through with the change; tab origin_city if (origin_country == "COUNTRY"), sort
 // Decide what to do with 'Russ' or 'S H S' or 'Wolyn' or 'Kiew'. Maybe add a flag or something to signal Zach to look into further then get rid of them in the table so they stop coming up.
+replace origin_country = "Albania" if (origin_country == "Albany") ///
+	| (origin_country == "Albanese") | (origin_country == "Albany") 
 replace origin_country = "Argentina" if (origin_country == "Argentine") ///
 	| (origin_country == "Angentina") | (origin_country == "Arg") ///
 	| (origin_country == "ArgRep") | (origin_country == "ArgRepSoAm") ///
@@ -143,21 +158,31 @@ replace origin_country = "Argentina" if (origin_country == "Argentine") ///
 	| (origin_country == "RepArg") | (origin_country == "RepArgSoAm") ///
 	| (origin_country == "Arg Rep") | (origin_country == "Rep Arg")
 replace origin_country = "Austria" if (origin_country == "Asutria") ///
-	| (origin_country=="Austrial")
+	| (origin_country=="Austrial") | (origin_country=="Austrian")
 replace origin_country = "Australia" if (origin_country == "Aus") ///
 	| (origin_country == "Aust") 
 replace origin_country = "Belgium" if (origin_country == "Belg") ///
 	| (origin_country=="Belguim")
 replace origin_country = "Belarus" if (origin_country == "Minsk") ///
 	| (origin_country == "Grodno") | (origin_country == "Pinsk Reg") ///
-	| (origin_country == "Witebsk")	
+	| (origin_country == "Witebsk")	| (origin_country == "Mohilew") ///
+	| (origin_country == "Pinsk")	| (origin_country == "Pinsk R") ///
+	| (origin_country == "Pinsk Region")	| (origin_country == "Mohilew") 
+// Should Bermuda be a country?
 replace origin_country = "Bermuda" if (origin_country == "Bda")
+replace origin_country = "Bosnia and Herzegovina" if (origin_country == "Herzegovina")
+replace origin_country = "Brazil" if (origin_country == "Brasil")
+replace origin_country = "Bulgaria" if (origin_country == "Bulgary")
 replace origin_country = "Canada" if (origin_country == "Nfld") ///
 	| (origin_country == "Newfoundland") | (origin_country == "Ont") ///
-	| (origin_country == "Can")
+	| (origin_country == "Can") | (origin_country == "Ontario") ///
+	| (origin_country == "Bc") | (origin_country == "Alberta") ///
+	| (origin_country == "Nova Scotia") | (origin_country == "Alberta")
 replace origin_country = "Chile" if (origin_country == "Chili")
 replace origin_country = "Colombia" if (origin_country == "Columbia")
-replace origin_country = "Croatia" if (origin_country == "Dalmatia")
+replace origin_country = "Croatia" if (origin_country == "Dalmatia") ///
+	| (origin_country == "Slavonia") | (origin_country == "Slavonia") ///
+	| (origin_country == "Croatian") | (origin_country == "Slavonia")	
 replace origin_country = "Curacao" if (origin_country == "Dwi")
 // Reassemble the Czech Republic - IS THIS APPROPRIATE???
 replace origin_country = "Czech Republic" if (origin_country == "Bohemia") ///
@@ -174,30 +199,54 @@ replace origin_country = "Czech Republic" if (origin_country == "Bohemia") ///
 	| (origin_country == "Czsl") | (origin_country == "C-Sl") ///
 	| (origin_country == "Czslovak") | (origin_country == "Czeco-Sl") ///
 	| (origin_country == "Czecho Sl") | (origin_country == "Czeckoslovakia") ///
-	| (origin_country == "Czec Slav") | (origin_country == "Czeckoslovakia") 
+	| (origin_country == "Czec Slav") | (origin_country == "Slovaky") ///
+	| (origin_country == "Czech") | (origin_country == "Czecko Slovakia") ///
+	| (origin_country == "Czslovakia") | (origin_country == "Tchecosl") ///
+	| (origin_country == "C Slovak") | (origin_country == "Cecho-Slovakia") ///
+	| (origin_country == "C Slovakia") | (origin_country == "Cechoslovakia") ///
+	| (origin_country == "Chechoslovakia") | (origin_country == "Cz Slovia") ///
+	| (origin_country == "Cz Slow") | (origin_country == "Czec Slov") ///
+	| (origin_country == "Czech Slov") | (origin_country == "Czecho") ///
+	| (origin_country == "Czecho Slovak") | (origin_country == "Czecho Slovakie") ///
+	| (origin_country == "Czecho-Slovak") | (origin_country == "Czechos") ///
+	| (origin_country == "Czechoslavakia") | (origin_country == "Czechoslovacia") ///
+	| (origin_country == "Czechoslovak") | (origin_country == "Czecoe-Slov") ///
+	| (origin_country == "Czecslav") | (origin_country == "Czekoslovakia") 
 replace origin_country = "Denmark" if (origin_country == "Denm") ///
-	| (origin_country=="Den") | (origin_country == "Denmark USA") ///
-	| (origin_country == "Hellerup")
+	| (origin_country == "Den") | (origin_country == "Denmark USA") ///
+	| (origin_country == "Hellerup") | (origin_country == "Denmarc")
+replace origin_country = "Dominican Republic" if (origin_country == "Santo Domingo") ///
+	| (origin_country == "Dr") | (origin_country == "Dom Rep") ///
+	| (origin_country == "Sto Domingo") | (origin_country == "Dom Rep")
 replace origin_country = "Egypt" if (origin_country == "Africa") & ((origin_city == "Alexandria") | (origin_city == "Cairo"))
+replace origin_country = "Egypt" if (origin_country == "Egypte") 
+// Guernsey and Isle Of Man probably shouldn't be in England (although putting it in Great Britain would be okay)
 replace origin_country = "England" if (origin_country == "Eng") ///
 	| (origin_country == "Engl?Nd") | (origin_country == "English") ///
 	| (origin_country == "Englanmd") | (origin_country == "Elgland") ///
-	| (origin_country == "Gr Brit")
+	| (origin_country == "Gr Brit") | (origin_country == "Kent") ///
+	| (origin_country == "Guernsey") | (origin_country == "London")	///
+	| (origin_country == "Cheshire") | (origin_country == "Isle Of Man")	
+replace origin_country = "El Salvador" if (origin_country == "Salvador")
+replace origin_country = "Finland" if (origin_country == "Aland")
 // Galicia is a legit historical area even though not a country anymore, but should not be separate to Galicy
 replace origin_country = "Galicia" if (origin_country == "Galicy") ///
 	| (origin_country == "Galizia") | (origin_country == "Galacia") ///
 	| (origin_country == "E Galicia") | (origin_country == "Gal")	
+// Should Steiermark be in Germany?
 replace origin_country = "Germany" if (origin_country == "Germ") ///
 	| (origin_country == "German") | (origin_country == "Germany A/M") ///
-	| (origin_country == "Ger")
+	| (origin_country == "Ger") | (origin_country == "Steiermark")
+replace origin_country = "Greece" if (origin_country == "Greek")
 replace origin_country = "Guatemala" if (origin_country == "Guatamala") ///
 	| (origin_country == "Guat") | (origin_country == "Guatamla") ///
 	| (origin_country == "Central America") // Note Central America was checked to make sure there weren't other countries in there
 replace origin_country = "Guyana" if (origin_country == "Demerara") 
 replace origin_country = "Hungary" if (origin_country == "Hung") ///
-	| (origin_country == "Hungaria") 
+	| (origin_country == "Hungaria") | (origin_country == "Ungary")	
 replace origin_country = "Ireland" if (origin_country == "Iireland") ///
-	| (origin_country == "Co Kerry") | (origin_country == "Ire")
+	| (origin_country == "Co Kerry") | (origin_country == "Ire") ///
+	| (origin_country == "Co Cork") | (origin_country == "Cork")
 // Reconstruct Italy from the Italian states
 replace origin_country = "Italy" if (origin_country == "Palermo") ///
 	| (origin_country == "Caserta") | (origin_country == "Salerno") ///
@@ -227,33 +276,68 @@ replace origin_country = "Italy" if (origin_country == "Palermo") ///
 	| (origin_country == "C Basso") | (origin_country == "Lecce") ///
 	| (origin_country == "Italian") | (origin_country == "South Italy") ///
 	| (origin_country == "Itlay") | (origin_country == "Modena") ///
-	| (origin_country == "Bologna") | (origin_country == "Verona")
+	| (origin_country == "Bologna") | (origin_country == "Verona") ///
+	| (origin_country == "Trento") | (origin_country == "Piacenza") ///
+	| (origin_country == "Potensa") | (origin_country == "Brescia") ///
+	| (origin_country == "Como") | (origin_country == "Ascoli") ///
+	| (origin_country == "Ita") | (origin_country == "Bergamo") ///
+	| (origin_country == "Forli") | (origin_country == "Cuneo") ///
+	| (origin_country == "Rome") | (origin_country == "Cosensa") ///
+	| (origin_country == "Rovigo") | (origin_country == "Genoa") ///
+	| (origin_country == "Reggiol") | (origin_country == "Cbasso") ///
+	| (origin_country == "Molise") | (origin_country == "Sondrio") ///
+	| (origin_country == "Ascoli P") | (origin_country == "Ital") ///
+	| (origin_country == "So Italy") | (origin_country == "Caltaniss") ///
+	| (origin_country == "Salermo") | (origin_country == "Gergenti")
 replace origin_country = "Italy" if (origin_country == "Italy Italy") ///
 	| (origin_country == "It") | (origin_country == "Italia")
 replace origin_country = "Jamaica" if (origin_country == "Ja") ///
 	| (origin_country == "Jamacia")
+replace origin_country = "Latvia" if (origin_country == "Lettonia") ///
+	| (origin_country == "Lettland") | (origin_country == "Livland")
+replace origin_country = "Lebanon" if (origin_country == "Liban") ///
+	| (origin_country == "Syrie Asian Turkey") | (origin_country == "Liban") 
 replace origin_country = "Lithuania" if (origin_country == "Kowno") ///
 	| (origin_country == "Wilna") | (origin_country == "Lith") ///
-	| (origin_country == "Lietuva") | (origin_country == "Wilno") 
-replace origin_country = "Lithuania" if (origin_country == "Lithuan") 
-replace origin_country = "Moldova" if (origin_country == "Bessarabia")
+	| (origin_country == "Lietuva") | (origin_country == "Wilno") ///
+	| (origin_country == "Lithauen") | (origin_country == "Lituania") 
+replace origin_country = "Lithuania" if (origin_country == "Lithuan") ///
+	| (origin_country == "Lithania") | (origin_country == "Lithaua") ///
+	| (origin_country == "Lithaunia") | (origin_country == "Lithuanian")
+replace origin_country = "Luxembourg" if (origin_country == "Luxemburg") 
+replace origin_country = "Mexico" if (origin_country == "Mex") 
+replace origin_country = "Moldova" if (origin_country == "Bessarabia") ///
+	| (origin_country == "Besarabia") | (origin_country == "Bessarabia")
 replace origin_country = "Netherlands" if (origin_country == "Netherland") ///
 	| (origin_country == "Holland") | (origin_country == "Netherl") ///
-	| (origin_country == "Holl")
-replace origin_country = "Norway" if (origin_country == "Nor")
+	| (origin_country == "Holl") | (origin_country == "Dutch") ///
+	| (origin_country == "Neth") | (origin_country == "Dutch") 	
+replace origin_country = "Norway" if (origin_country == "Nor") ///
+	| (origin_country == "Norw")
 replace origin_country = "Palestine" if (origin_country == "Palestina") ///
 	| (origin_country == "Palistine")
 replace origin_country = "Panama" if (origin_country == "Republic Of Panama") ///
-	| (origin_country == "R Of P")
+	| (origin_country == "R Of P") | (origin_country == "C Z") ///
+	| (origin_country == "Canal Zone") | (origin_country == "C Z")
+replace origin_country = "Poland" if (origin_country == "Lomza") ///
+	| (origin_country == "Danzig") | (origin_country == "Suwalk") ///
+	| (origin_country == "Plock") | (origin_country == "Warschau")	
 replace origin_country = "Portugal" if (origin_country == "St Michael'S") ///
 	| (origin_country == "St Michaels") | (origin_country == "Madeira") ///
-	| (origin_country == "Azores") | (origin_country == "Terceira")	
+	| (origin_country == "Azores") | (origin_country == "Terceira")	///
+	| (origin_country == "Flores") | (origin_country == "Azores (St Michaels)")	///
+	| (origin_country == "Azores Terceira") | (origin_country == "Azores (St Michaels)")
+replace origin_country = "Puerto Rico" if (origin_country == "P R") ///
+	| (origin_country == "Pr") | (origin_country == "P R") 
 replace origin_country = "Romania" if (origin_country == "Roumania.") ///
 	| (origin_country == "Roumany") | (origin_country == "Roumania") ///
 	| (origin_country == "Roum") | (origin_country == "Roumanian") ///
-	| (origin_country == "Rumania") | (origin_country == "Rouman")
+	| (origin_country == "Rumania") | (origin_country == "Rouman") ///
+	| (origin_country == "Rumenia") | (origin_country == "Rouman")
 replace origin_country = "Russia" if (origin_country == "Samara") ///
-	| (origin_country == "Russian") 
+	| (origin_country == "Russian") | (origin_country == "Saratow") ///
+	| (origin_country == "Russiaa") | (origin_country == "Saratow") 
+replace origin_country = "Saint Kitts and Nevis" if (origin_country == "St Kitts")
 replace origin_country = "Scotland" if (origin_country == "Scot") 
 replace origin_country = "Serbia" if (origin_country == "Servia") 
 replace origin_country = "South Africa" if (origin_country == "So Africa") ///
@@ -261,18 +345,30 @@ replace origin_country = "South Africa" if (origin_country == "So Africa") ///
 	| (origin_country == "S Af") | (origin_country == "S'Africa") ///
 	| (origin_country == "So Afrika")
 replace origin_country = "South Africa" if (origin_country == "Africa") & ((origin_city == "Johannesburg") | (origin_city == "Cape Town"))
-replace origin_country = "Slovenia" if (origin_country == "Carniola")
+replace origin_country = "Slovenia" if (origin_country == "Carniola") ///
+	| (origin_country == "Krain")
 // Make Shs and S H S consistent - NOT SURE WHAT IT'S MEANT TO BE
 replace origin_country = "S H S" if (origin_country == "Shs")
+replace origin_country = "Spain" if (origin_country == "Alicante") ///
+	| (origin_country == "Barcelona") | (origin_country == "Alicante")
+replace origin_country = "Sweden" if (origin_country == "Swe") ///
+	| (origin_country == "Swed") | (origin_country == "Swe")
 replace origin_country = "Switzerland" if (origin_country == "Switzserland") ///
 	| (origin_country == "Switz") | (origin_country == "Swiss") ///
-	| (origin_country == "Switzerl")
-replace origin_country = "Trinidad and Tobago" if (origin_country == "Trinidad")
+	| (origin_country == "Switzerl") | (origin_country == "Switzer")	
+replace origin_country = "Syria" if (origin_country == "Syrie") ///
+	| (origin_country == "Syrian") | (origin_country == "Syrie") 
+replace origin_country = "Trinidad and Tobago" if (origin_country == "Trinidad") ///
+	| (origin_country == "Bwi") | (origin_country == "Trinidad") 
 replace origin_country = "Tunisia" if (origin_country == "Africa") & (origin_city == "Tunis")
 replace origin_country = "Turkey" if (origin_country == "Turkey A") ///
 	| (origin_country == "Turkey E") | (origin_country == "Turkish") ///
-	| (origin_country == "Turk")
-replace origin_country = "Ukraine" if (origin_country == "Cherson")
+	| (origin_country == "Turk") | (origin_country == "Turky") ///
+	| (origin_country == "Asia Minor") | (origin_country == "Costantinopoli") ///
+	| (origin_country == "Turquey") | (origin_country == "Costantinopoli")
+replace origin_country = "Ukraine" if (origin_country == "Cherson") ///
+	| (origin_country == "Podol") | (origin_country == "Poltawa") ///
+	| (origin_country == "Ukrainia") | (origin_country == "Kiev")
 // Change country of origin from various US states to United States
 replace origin_country = "United States" if (origin_country == "Ny") ///
 	| (origin_country == "Pa") | (origin_country == "Ill") ///
@@ -292,7 +388,25 @@ replace origin_country = "United States" if (origin_country == "USA (Casamicclol
 	| (origin_country == "U S Of A") | (origin_country == "NY USA  Jettenback") ///
 	| (origin_country == "NY USA  Jettenback") | (origin_country == "Usa") ///
 	| (origin_country == "Us") | (origin_country == "USA") ///
-	| (origin_country == "Ny Usa") | (origin_country == "USA")
+	| (origin_country == "Ny Usa") | (origin_country == "Mont") ///
+	| (origin_country == "Col") | (origin_country == "St Thomas") ///
+	| (origin_country == "Mo") | (origin_country == "Texas") ///
+	| (origin_country == "Il") | (origin_country == "W Va")	///
+	| (origin_country == "Ills") | (origin_country == "O")	///
+	| (origin_country == "Pa Usa") | (origin_country == "Mass Usa")	///
+	| (origin_country == "Ri") | (origin_country == "St Croix") ///
+	| (origin_country == "Illinois") | (origin_country == "Nebr") ///
+	| (origin_country == "Ore") | (origin_country == "Michigan") ///
+	| (origin_country == "Pennsylvania") | (origin_country == "New Jersey") ///
+	| (origin_country == "Oh") | (origin_country == "Ill Usa") ///
+	| (origin_country == "Indiana") | (origin_country == "Wis") ///	
+	| (origin_country == "Brooklyn") | (origin_country == "Ca") ///
+	| (origin_country == "Calif") | (origin_country == "California") ///
+	| (origin_country == "Nj Usa") | (origin_country == "Utah") ///
+	| (origin_country == "Vi") | (origin_country == "Wyo") ///
+	| (origin_country == "Nh") | (origin_country == "Ma") ///
+	| (origin_country == "Mich Usa") | (origin_country == "Minnesota") ///
+	| (origin_country == "Montana") | (origin_country == "Nyork")
 replace origin_country = "Venezuela" if (origin_country == "Venez")
 replace origin_country = "Wales" if (origin_country=="Swales")
 // Reassemble Yugoslavia - IS THIS APPROPRIATE??? - (SR Bosnia and Herzegovina, SR Croatia, SR Macedonia, SR Montenegro, SR Slovenia, and SR Serbia)
@@ -300,93 +414,270 @@ replace origin_country = "Yugoslavia" if (origin_country == "Jugoslavia") ///
 	| (origin_country == "Yougoslavia") | (origin_country == "Jugosl") ///
 	| (origin_country == "Jugoslav") | (origin_country == "Yougosl") ///
 	| (origin_country == "Yugo-Slav") | (origin_country == "Jugo Slavia") ///
-	| (origin_country == "Jugo-Slav") | (origin_country == "Yugo-Sl") 
+	| (origin_country == "Jugo-Sl") | (origin_country == "Yugo-Sl") ///
+	| (origin_country == "Yugo Slavish") | (origin_country == "Jugoslv") ///
+	| (origin_country == "J Slav") | (origin_country == "Jougosl") ///
+	| (origin_country == "Yugoslav") | (origin_country == "Jugo Slav") ///
+	| (origin_country == "Yugosl") | (origin_country == "Yugo-Slavia") ///
+	| (origin_country == "Yugo Sl") | (origin_country == "Yugo-Slavia") 
 	
-	
-	       
+// Should we reassemble Great Britain or better separated?	
+// Not sure what to do with Russ vs Rus	
+// Need to separate the different countries caught up in So Am and So Amer
+// Have left Prussia as a country, not sure if want to integrate into Germany or leave separate
+// Come back to: Curland, Austr, Pos, Massa, Pol, Styria, Ta, Rssia, Rusfia, Csl, T A, Ekaterinoslaw, GR, Istria, Slov, A, Archipelago, Archipelagos, Va
+// W I is West Indies, but need to look at where to put them
+// Bukowina is split between Romania and Ukraine these days - not sure how to deal with that
 
 
-
-
-
-
-
-
-
-
-
+Italy: 
+Agusta
+Arezzo
+Arellino
 ////////UP TO HERE - CLEAN THESE ONES NEXT
-tab origin_city if (origin_country == ""), sort
+tab origin_city if (origin_country == "Ma"), sort
 
-                      Mohilew |         50        0.09       62.80
-                      Co Cork |         49        0.09       62.88
-                      Prussia |         49        0.09       62.97
-                      Slovaky |         49        0.09       63.05
-                      Brescia |         46        0.08       63.13
-                       Albany |         45        0.08       63.21
-                       Trento |         44        0.08       63.29
-                     Piacenza |         43        0.07       63.36
-                      Potensa |         43        0.07       63.44
-                        Austr |         42        0.07       63.51
-                      Bergamo |         42        0.07       63.58
-                         Mont |         42        0.07       63.65
-                          Pos |         42        0.07       63.73
-                Santo Domingo |         42        0.07       63.80
-                          Col |         41        0.07       63.87
-                    St Thomas |         41        0.07       63.94
-                        Greek |         40        0.07       64.01
-                        Turky |         40        0.07       64.08
-                           Mo |         39        0.07       64.15
-                         Como |         38        0.07       64.22
-                         Ills |         38        0.07       64.28
-                     Slavonia |         38        0.07       64.35
-                          Swe |         38        0.07       64.41
-                          Bwi |         37        0.06       64.48
-                        Cuneo |         36        0.06       64.54
-                        Dutch |         36        0.06       64.60
-                        So Am |         36        0.06       64.67
-                       Ungary |         36        0.06       64.73
-                        Forli |         35        0.06       64.79
-                        Lomza |         35        0.06       64.85
-                            O |         35        0.06       64.91
-                          Pol |         35        0.06       64.97
-                        Syrie |         35        0.06       65.03
-                     Bukowina |         34        0.06       65.09
-                           Il |         34        0.06       65.15
-                      Jugoslv |         34        0.06       65.21
-                    Luxemburg |         34        0.06       65.27
-                       Pa Usa |         34        0.06       65.33
-                       Styria |         34        0.06       65.39
-                           Ta |         34        0.06       65.45
-                      Cosensa |         33        0.06       65.50
-                       Danzig |         33        0.06       65.56
-                      Poltawa |         33        0.06       65.62
-                           Ri |         33        0.06       65.68
-                      Jugo-Sl |         32        0.06       65.73
-                         Neth |         32        0.06       65.79
-                     St Croix |         32        0.06       65.84
-                       Suwalk |         32        0.06       65.90
-                          W I |         32        0.06       65.95
-                         W Va |         32        0.06       66.01
-                        Czech |         31        0.05       66.06
-                       J Slav |         31        0.05       66.12
-                     Lithauen |         31        0.05       66.17
-                         Rome |         31        0.05       66.23
-                 Yugo Slavish |         31        0.05       66.28
-                       Brasil |         30        0.05       66.33
-                      Bulgary |         30        0.05       66.38
-                     Mass Usa |         30        0.05       66.44
-                       Rovigo |         30        0.05       66.49
-                        Rssia |         30        0.05       66.54
-                        Texas |         30        0.05       66.59
-
-
-
-
-
-
-
-
+Alexandria
+Alta
+Armeny
+Attica
+Austria Hungary
+Austriaa
+B Guiana
+B W I
+B'Da
+Basi
+Basso
+Bavaria
+Bel
+Belgia
+Belgian
+Bergen
+Bessarab
+Bessarabien
+Boh
+Bosnia
+Brazil So Am
+By
+C
+Cz
+Caltanis
+Caltanisfetta
+Campobano
+Campobayo
+Campobosso
+Casenza
+Caserto
+Catansaro
+Cattanissetta
+Ceramo
+Cicily
+Co Clare
+Co Galway
+Co Mayo
+Co Tipperary
+Colomb
+Con
+Consenza
+Copenhagen
+Cordoba
+Corino
+Corinthia
+Corse
+Coruna
+Cotenza
+Crapani
+Crete
+Cslovakia
+Ct
+Cuban
+D W I
+Dalmacia
+Dc
+Drohsbicz
+Eker
+Englad
+Epire
+Epiro
+Erapani
+Esthonia
+Farsund
+Fayal
+Ferrara
+Finl
+Fland
+Foggio
+Fra
+Francais
+Freestate Of Danzig
+French
+Friesland
+Fwi
+Galina
+Galizien
+Gard
+Gradno
+Grimstad
+Grodns
+Groningen
+Grosseto
+Han
+Hayti
+Herzegov (Usa)
+Holand
+Hungar
+Ia
+In
+Irel
+Itali
+Italy South
+Italyy
+Jam
+Jamiaca
+Jkpg
+J-Sl
+Jugo Slovakia
+Jugo-Slavia
+Jugosla
+Jundine
+Karnten
+Kerry
+Kingston
+Klmr
+Kovno
+Kpbg
+Kurland
+Ky
+L Austria
+Laconia
+Lifland
+Lower Austria
+Lublin
+Lucia
+Luxemb
+M
+Macerata
+Mantova
+Martinique
+Massa C
+Mayo
+Md
+Mesfina
+Mogilew
+Montenegrin
+N B
+N Italy
+Nb
+Nc
+Neb
+Np
+Ns
+Oe
+P-O-Spain
+Padova
+Palerno
+Palestinia
+Palmero
+Pod
+Polermo
+Polish
+Port Said
+Porto Rico
+Posen
+Posha
+Potenzo
+Queensland
+R
+R Calabria
+Reggio Calabria
+Reggio Col
+Reggio E
+Roamania
+Rodi
+Rp
+Rumanian
+Rusjia
+S A
+S Am
+S America
+S Miguel
+S Wales
+Saba
+Salemo
+San Jose
+Santander
+Sask
+Serbs Croats & Slovenes
+Serby
+Sicely
+Skbg
+Slovaki
+Sloviaka
+Smyrna
+Sogn
+Solerno
+Soria
+South America
+Spain Bc
+Staff
+Sto Dgo
+Suisse
+Surinam
+Sussex
+Sw
+Swedenn
+Switserland
+Switzerld
+Switzland
+Syria A
+Syria Ta
+T Slov
+T Slovak
+T'Dad
+Taurien
+Tavricien
+Tcheco-Slovac
+Tcheco-Slovakie
+Tcheco-Slovaky
+Tchecoslovakia
+Tirol
+Tirolo
+Tripoli
+Tunisie
+Turchia
+Turk A
+Turkeuy
+Turkia
+Turky A
+Tyne
+Tyrol
+Ukrania
+Ungarn
+V N
+Vb
+Ven
+Venezia
+Verml
+Vrml
+W Ind
+W Indies
+Warschaw
+Warshaw
+Werml
+West Indies
+Y Slav
+Y Slavia
+Y Slove
+Y-Slavia
+Yorks
+Yougo Slovaky
+Yougo-Sl
+Yougo-Slav
+Yougoslav
+Yugo Slav
+Yugo Slavia
+Zeeland
+Zernigow
 
 
 
