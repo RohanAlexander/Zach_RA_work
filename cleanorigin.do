@@ -1,38 +1,59 @@
 //////////////////////// Preamble ////////////////////////
+
 // Author: Rohan Alexander
+
 // Contact: rohan.alexander@anu.edu.au 
-/* Description: The point of this script is to clean data. At the moment the focus 
+
+/* 
+Description: The point of this script is to clean data. At the moment the focus 
 is on cleaning locations of origin. The location starts as a string that may have 
 comma separators that may help. The initial split is done on the comma and that 
 gets you a decent amount of the way. Some of the strings have the country first 
 then the city (rather than the majority which are the opposite) so you need to 
 swap those. Then some don't have a country, despite having a city or state and 
 so those need to be cleaned. 
-This would actually be a really good problem for machine learning and it will be 
+
+(This would actually be a really good problem for machine learning and it will be 
 interesting to see if this can be implemented once this project is done and 
 provided for others as an R package. Seems like a common problem for historians, 
 and an extension of the package could be to specify your time period of interest 
-so not all being pushed to modern.
+so not all being pushed to modern.)
 */
 
 
 //////////////////////// Initial set up and load data ////////////////////////
 clear all
 
-set more off, permanently
+//set more off, permanently
+set more off
+//set more off, permanently
 
 use "/hdir/0/monicah/Desktop/EIbrothers18921924.dta"
 
 
 //////////////////////// Start separating the cities and countries ////////////////////////
 //Separate origin based on the first comma
+gen reversed = reverse(origin) 
+split reversed, generate(reversed) parse(,) limit(2)
+gen origin_country_from_reversed = reverse(reversed1) 
+drop reversed
+drop reversed1
+drop reversed2
+
 split origin, generate(origin) parse(,) limit(2)
 rename origin1 origin_city
 rename origin2 origin_country
+drop origin_country
+
+rename origin_country_from_reversed origin_country
 
 //Deal with some horrible formatting inserted by the website
+// ssc install charlist
+// charlist origin_country
 replace origin_city = subinstr(origin_city, char(160), "", .)
+replace origin_country = subinstr(origin_country, char(160), "", .)
 //replace origin_city = subinstr(origin_city, "Â", "", .)
+//replace origin_country = subinstr(origin_country, "Â", "", .)
 replace origin_city = subinstr(origin_city, ".", "", .)
 replace origin_city = subinstr(origin_city, "'", " ", .)
 replace origin_city = subinstr(origin_city, ";", " ", .)
@@ -42,6 +63,7 @@ replace origin_country = trim(origin_country)
 replace origin_city = trim(origin_city)
 replace origin_country = strproper(origin_country)
 replace origin_city = strproper(origin_city)
+
 
 
 //////////////////////// Typos in the cities names ////////////////////////
@@ -122,6 +144,7 @@ drop origin_city_tmp
 
 // Create a flag indicating whether the origin_country is a country
 // Initial list is from http://m.state.gov/mc17517.htm, but with United States added, and some formatting ', ,, - removed. After that there are a few countries that were added (see the final line of the macro) because they are reasonable as historical countries
+// drop is_country_flag
 gen is_country_flag = .
 local list_of_countries `" "Afghanistan" "Albania" "Algeria" "Andorra" "Angola" "Antigua and Barbuda" "Argentina" "Armenia" "Aruba" "Australia" "Austria" "Azerbaijan" "Bahamas" "Bahrain" "Bangladesh" "Barbados" "Belarus" "Belgium" "Belize" "Benin" "Bhutan" "Bolivia" "'
 local list_of_countries `" `list_of_countries' "Bosnia and Herzegovina" "Botswana" "Brazil" "Brunei" "Bulgaria" "Burkina Faso" "Burma" "Burundi" "Cambodia" "Cameroon" "Canada" "Cabo Verde" "Central African Republic" "Chad" "Chile" "China" "Colombia" "Comoros" "Congo" "Congo" "Costa Rica"  "'
@@ -133,16 +156,16 @@ local list_of_countries `" `list_of_countries' "Norway" "Oman" "Pakistan" "Palau
 local list_of_countries `" `list_of_countries' "San Marino" "Sao Tome and Principe" "Saudi Arabia" "Senegal" "Serbia" "Seychelles" "Sierra Leone" "Singapore" "Sint Maarten" "Slovakia" "Slovenia" "Solomon Islands" "Somalia" "South Africa" "South Korea" "South Sudan" "Spain" "Sri Lanka" "Sudan" "Suriname" "'
 local list_of_countries `" `list_of_countries' "Swaziland" "Sweden" "Switzerland" "Syria" "Taiwan" "Tajikistan" "Tanzania" "Thailand" "Timor Leste" "Togo" "Tonga" "Trinidad and Tobago" "Tunisia" "Turkey" "Turkmenistan" "Tuvalu" "Uganda" "Ukraine" "United Arab Emirates" "United Kingdom" "Uruguay" "Uzbekistan" "Vanuatu" "Venezuela" "Vietnam" "Yemen" "Zambia" "Zimbabwe" "'
 local list_of_countries `" `list_of_countries' "United States" "Galicia" "'
+
 // display `"`list_of_countries'"'
 // Iterate through the list of countries and add a flag if it's not a country.  
 foreach country of local list_of_countries {
 	quietly replace is_country_flag = 1 if (origin_country == "`country'") 
 }
-// drop is_country_flag
+
 
 //////////////////////// Fix remaining messy countries (some of these are more than just typos - possible errors introduced here)
-// Use this to list the countries that need to be looked at
-// tab origin_country if missing(is_country_flag), sort
+
 // The cities of all these countries need to be checked before going through with the change; tab origin_city if (origin_country == "COUNTRY"), sort
 // Decide what to do with 'Russ' or 'S H S' or 'Wolyn' or 'Kiew'. Maybe add a flag or something to signal Zach to look into further then get rid of them in the table so they stop coming up.
 replace origin_country = "Albania" if (origin_country == "Albany") ///
@@ -157,8 +180,10 @@ replace origin_country = "Argentina" if (origin_country == "Argentine") ///
 	| (origin_country == "Argt") | (origin_country == "Aurgentina") ///
 	| (origin_country == "RepArg") | (origin_country == "RepArgSoAm") ///
 	| (origin_country == "Arg Rep") | (origin_country == "Rep Arg")
+replace origin_country = "Armania" if (origin_country == "Armeny") 
 replace origin_country = "Austria" if (origin_country == "Asutria") ///
-	| (origin_country=="Austrial") | (origin_country=="Austrian")
+	| (origin_country=="Austrial") | (origin_country=="Austrian") ///
+	| (origin_country=="Austriaa") | (origin_country=="Austrian") 
 replace origin_country = "Australia" if (origin_country == "Aus") ///
 	| (origin_country == "Aust") 
 replace origin_country = "Belgium" if (origin_country == "Belg") ///
@@ -177,7 +202,7 @@ replace origin_country = "Canada" if (origin_country == "Nfld") ///
 	| (origin_country == "Newfoundland") | (origin_country == "Ont") ///
 	| (origin_country == "Can") | (origin_country == "Ontario") ///
 	| (origin_country == "Bc") | (origin_country == "Alberta") ///
-	| (origin_country == "Nova Scotia") | (origin_country == "Alberta")
+	| (origin_country == "Nova Scotia") | (origin_country == "Alta")
 replace origin_country = "Chile" if (origin_country == "Chili")
 replace origin_country = "Colombia" if (origin_country == "Columbia")
 replace origin_country = "Croatia" if (origin_country == "Dalmatia") ///
@@ -219,7 +244,8 @@ replace origin_country = "Dominican Republic" if (origin_country == "Santo Domin
 	| (origin_country == "Dr") | (origin_country == "Dom Rep") ///
 	| (origin_country == "Sto Domingo") | (origin_country == "Dom Rep")
 replace origin_country = "Egypt" if (origin_country == "Africa") & ((origin_city == "Alexandria") | (origin_city == "Cairo"))
-replace origin_country = "Egypt" if (origin_country == "Egypte") 
+replace origin_country = "Egypt" if (origin_country == "Egypte") ///
+	| (origin_country == "Alexandria") | (origin_country == "Egypte") 
 // Guernsey and Isle Of Man probably shouldn't be in England (although putting it in Great Britain would be okay)
 replace origin_country = "England" if (origin_country == "Eng") ///
 	| (origin_country == "Engl?Nd") | (origin_country == "English") ///
@@ -237,11 +263,13 @@ replace origin_country = "Galicia" if (origin_country == "Galicy") ///
 replace origin_country = "Germany" if (origin_country == "Germ") ///
 	| (origin_country == "German") | (origin_country == "Germany A/M") ///
 	| (origin_country == "Ger") | (origin_country == "Steiermark")
-replace origin_country = "Greece" if (origin_country == "Greek")
+replace origin_country = "Greece" if (origin_country == "Greek") ///
+	| (origin_country == "Attica") | (origin_country == "Greek") 
 replace origin_country = "Guatemala" if (origin_country == "Guatamala") ///
 	| (origin_country == "Guat") | (origin_country == "Guatamla") ///
 	| (origin_country == "Central America") // Note Central America was checked to make sure there weren't other countries in there
-replace origin_country = "Guyana" if (origin_country == "Demerara") 
+replace origin_country = "Guyana" if (origin_country == "Demerara") ///
+	| (origin_country == "B Guiana") | (origin_country == "Demerara")
 replace origin_country = "Hungary" if (origin_country == "Hung") ///
 	| (origin_country == "Hungaria") | (origin_country == "Ungary")	
 replace origin_country = "Ireland" if (origin_country == "Iireland") ///
@@ -288,7 +316,9 @@ replace origin_country = "Italy" if (origin_country == "Palermo") ///
 	| (origin_country == "Molise") | (origin_country == "Sondrio") ///
 	| (origin_country == "Ascoli P") | (origin_country == "Ital") ///
 	| (origin_country == "So Italy") | (origin_country == "Caltaniss") ///
-	| (origin_country == "Salermo") | (origin_country == "Gergenti")
+	| (origin_country == "Salermo") | (origin_country == "Gergenti") ///
+	| (origin_country == "Agusta") | (origin_country == "Arezzo") ///
+	| (origin_country == "Arellino") | (origin_country == "Arezzo")
 replace origin_country = "Italy" if (origin_country == "Italy Italy") ///
 	| (origin_country == "It") | (origin_country == "Italia")
 replace origin_country = "Jamaica" if (origin_country == "Ja") ///
@@ -337,8 +367,10 @@ replace origin_country = "Romania" if (origin_country == "Roumania.") ///
 replace origin_country = "Russia" if (origin_country == "Samara") ///
 	| (origin_country == "Russian") | (origin_country == "Saratow") ///
 	| (origin_country == "Russiaa") | (origin_country == "Saratow") 
-replace origin_country = "Saint Kitts and Nevis" if (origin_country == "St Kitts")
-replace origin_country = "Scotland" if (origin_country == "Scot") 
+replace origin_country = "Saint Kitts and Nevis" if (origin_country == "St Kitts") ///
+	| (origin_country == "B W I") | (origin_country == "St Kitts") 
+replace origin_country = "Scotland" if (origin_country == "Scot") ///
+	| (origin_country == "Glasgow") | (origin_country == "Scot")
 replace origin_country = "Serbia" if (origin_country == "Servia") 
 replace origin_country = "South Africa" if (origin_country == "So Africa") ///
 	| (origin_country == "S Africa") | (origin_country == "S Afr") ///
@@ -425,259 +457,589 @@ replace origin_country = "Yugoslavia" if (origin_country == "Jugoslavia") ///
 // Not sure what to do with Russ vs Rus	
 // Need to separate the different countries caught up in So Am and So Amer
 // Have left Prussia as a country, not sure if want to integrate into Germany or leave separate
-// Come back to: Curland, Austr, Pos, Massa, Pol, Styria, Ta, Rssia, Rusfia, Csl, T A, Ekaterinoslaw, GR, Istria, Slov, A, Archipelago, Archipelagos, Va
+// Come back to: Curland, Austr, Pos, Massa, Pol, Styria, Ta, Rssia, Rusfia, Csl, T A, Ekaterinoslaw, GR, Istria, Slov, A, Archipelago, Archipelagos, Va, Austria Hungary, B'Da
 // W I is West Indies, but need to look at where to put them
 // Bukowina is split between Romania and Ukraine these days - not sure how to deal with that
 
+// Use this to list the countries that need to be looked at
+// 
+egen x = count(1), by(origin_country)
+gsort -x origin_country
 
-Italy: 
-Agusta
-Arezzo
-Arellino
+tab origin_country if x > 25 & x < 61 & !missing(x) & missing(is_country_flag), sort
+tab origin_city if origin_country == "Paris"
+
+
+
+
 ////////UP TO HERE - CLEAN THESE ONES NEXT
-tab origin_city if (origin_country == "Ma"), sort
+tab origin if (origin_country == "Glasgow"), sort
 
-Alexandria
-Alta
-Armeny
-Attica
-Austria Hungary
-Austriaa
-B Guiana
-B W I
-B'Da
-Basi
-Basso
-Bavaria
-Bel
-Belgia
-Belgian
-Bergen
-Bessarab
-Bessarabien
-Boh
-Bosnia
-Brazil So Am
-By
-C
-Cz
-Caltanis
-Caltanisfetta
-Campobano
-Campobayo
-Campobosso
-Casenza
-Caserto
-Catansaro
-Cattanissetta
-Ceramo
-Cicily
-Co Clare
-Co Galway
-Co Mayo
-Co Tipperary
-Colomb
-Con
-Consenza
-Copenhagen
-Cordoba
-Corino
-Corinthia
-Corse
-Coruna
-Cotenza
-Crapani
-Crete
-Cslovakia
-Ct
-Cuban
-D W I
-Dalmacia
-Dc
-Drohsbicz
-Eker
-Englad
-Epire
-Epiro
-Erapani
-Esthonia
-Farsund
-Fayal
-Ferrara
-Finl
-Fland
-Foggio
-Fra
-Francais
-Freestate Of Danzig
-French
-Friesland
-Fwi
-Galina
-Galizien
-Gard
-Gradno
-Grimstad
-Grodns
-Groningen
-Grosseto
-Han
-Hayti
-Herzegov (Usa)
-Holand
-Hungar
-Ia
-In
-Irel
-Itali
-Italy South
-Italyy
-Jam
-Jamiaca
-Jkpg
-J-Sl
-Jugo Slovakia
-Jugo-Slavia
-Jugosla
-Jundine
-Karnten
-Kerry
-Kingston
-Klmr
-Kovno
-Kpbg
-Kurland
-Ky
-L Austria
-Laconia
-Lifland
-Lower Austria
-Lublin
-Lucia
-Luxemb
-M
-Macerata
-Mantova
-Martinique
-Massa C
-Mayo
-Md
-Mesfina
-Mogilew
-Montenegrin
-N B
-N Italy
-Nb
-Nc
-Neb
-Np
-Ns
-Oe
-P-O-Spain
-Padova
-Palerno
-Palestinia
-Palmero
-Pod
-Polermo
-Polish
-Port Said
-Porto Rico
-Posen
-Posha
-Potenzo
-Queensland
-R
-R Calabria
-Reggio Calabria
-Reggio Col
-Reggio E
-Roamania
-Rodi
-Rp
-Rumanian
-Rusjia
-S A
-S Am
-S America
-S Miguel
-S Wales
-Saba
-Salemo
-San Jose
-Santander
-Sask
-Serbs Croats & Slovenes
-Serby
-Sicely
-Skbg
-Slovaki
-Sloviaka
-Smyrna
-Sogn
-Solerno
-Soria
-South America
-Spain Bc
-Staff
-Sto Dgo
-Suisse
-Surinam
-Sussex
-Sw
-Swedenn
-Switserland
-Switzerld
-Switzland
-Syria A
-Syria Ta
-T Slov
-T Slovak
-T'Dad
-Taurien
-Tavricien
-Tcheco-Slovac
-Tcheco-Slovakie
-Tcheco-Slovaky
-Tchecoslovakia
-Tirol
-Tirolo
-Tripoli
-Tunisie
-Turchia
-Turk A
-Turkeuy
-Turkia
-Turky A
-Tyne
-Tyrol
-Ukrania
-Ungarn
-V N
-Vb
-Ven
-Venezia
-Verml
-Vrml
-W Ind
-W Indies
-Warschaw
-Warshaw
-Werml
-West Indies
-Y Slav
-Y Slavia
-Y Slove
-Y-Slavia
-Yorks
-Yougo Slovaky
-Yougo-Sl
-Yougo-Slav
-Yougoslav
-Yugo Slav
-Yugo Slavia
-Zeeland
-Zernigow
+                                 Beyrouth |      1,981        3.02       54.93
+                                Glasgow |      1,033        1.57       60.83
+                                 Odessa |        771        1.17       62.01
+                                Bermuda |        679        1.03       63.04
+                              Liverpool |        592        0.90       63.94
+                                Sciacca |        572        0.87       64.81
+                                  Paris |        558        0.85       65.66
+                                 Havana |        529        0.81       66.47
+                            Christiania |        509        0.78       67.24
+                                  Jassy |        508        0.77       68.02
+                               Bucarest |        437        0.67       68.68
+                              Rotterdam |        404        0.62       69.30
+                                  Hango |        395        0.60       69.90
+                             Gothenburg |        394        0.60       70.50
+                                 Bergen |        390        0.59       71.09
+                                Termini |        359        0.55       71.64
+                                Belfast |        347        0.53       72.17
+                                  So Am |        342        0.52       72.69
+                             Copenhagen |        335        0.51       73.20
+                                   Kiew |        330        0.50       73.70
+                                  S H S |        317        0.48       74.19
+                                  Libau |        296        0.45       74.64
+                             Manchester |        290        0.44       75.08
+                                   Russ |        272        0.41       75.49
+                                  Piree |        250        0.38       75.87
+                                Jutland |        243        0.37       76.24
+                                   Lodz |        218        0.33       76.58
+                              Stavanger |        213        0.32       76.90
+                               Corleone |        195        0.30       77.20
+                                     Wi |        186        0.28       77.48
+                                Tripoli |        183        0.28       77.76
+                                 Sparta |        181        0.28       78.03
+                              S Stefano |        178        0.27       78.31
+                                  Cerda |        177        0.27       78.58
+                                 Dundee |        175        0.27       78.84
+                                S Agata |        172        0.26       79.10
+                                 Berlin |        165        0.25       79.36
+                                Lemberg |        164        0.25       79.61
+                                Marineo |        163        0.25       79.85
+                                 Galatz |        158        0.24       80.09
+                                Antwerp |        157        0.24       80.33
+                                  Wolyn |        156        0.24       80.57
+                             Birmingham |        155        0.24       80.81
+                              Palestine |        153        0.23       81.04
+                               Hamilton |        150        0.23       81.27
+                                Lercara |        144        0.22       81.49
+                               Bagheria |        142        0.22       81.70
+                              Bialystok |        142        0.22       81.92
+                               Campagna |        141        0.21       82.14
+                                 Dublin |        141        0.21       82.35
+                                So Amer |        141        0.21       82.56
+                                  Leeds |        140        0.21       82.78
+                              Stockholm |        138        0.21       82.99
+                                Donegal |        137        0.21       83.20
+                                  Menfi |        134        0.20       83.40
+                             Marseilles |        133        0.20       83.60
+                              Amsterdam |        132        0.20       83.80
+                              Edinburgh |        131        0.20       84.00
+                              Sao Paulo |        129        0.20       84.20
+                                  Fayal |        128        0.19       84.40
+                           S Margherita |        128        0.19       84.59
+                              Avigliano |        125        0.19       84.78
+                               Belmonte |        124        0.19       84.97
+                                Paisley |        124        0.19       85.16
+                                Nicosia |        123        0.19       85.35
+                                Hamburg |        122        0.19       85.53
+                               Nicastro |        122        0.19       85.72
+                                  Roman |        121        0.18       85.90
+                                  Sarno |        121        0.18       86.09
+                                 Africa |        120        0.18       86.27
+                                 Ribera |        120        0.18       86.45
+                                 Trabia |        119        0.18       86.63
+                                 Cefalu |        117        0.18       86.81
+                                Arendal |        116        0.18       86.99
+                                  Derry |        116        0.18       87.16
+                                Caccamo |        115        0.18       87.34
+                                 Lipari |        115        0.18       87.51
+                             Valledolmo |        114        0.17       87.69
+                                Sambuca |        113        0.17       87.86
+                                 Antrim |        112        0.17       88.03
+                                 Persia |        108        0.16       88.20
+                              Sheffield |        106        0.16       88.36
+                               Aberdeen |        103        0.16       88.51
+                                Suwalki |        102        0.16       88.67
+                               Budapest |        101        0.15       88.82
+                                 Tyrone |        101        0.15       88.98
+                                 Warsaw |        101        0.15       89.13
+                                 Alcamo |         99        0.15       89.28
+                              Altavilla |         99        0.15       89.43
+                                  Patti |         99        0.15       89.58
+                                   Riga |         99        0.15       89.73
+                             Kristiania |         98        0.15       89.88
+                              Villarosa |         98        0.15       90.03
+                                 S Fele |         97        0.15       90.18
+                                   Wien |         94        0.14       90.32
+                               S Flavia |         93        0.14       90.47
+                                    W I |         93        0.14       90.61
+                                   Acri |         92        0.14       90.75
+                             Camporeale |         92        0.14       90.89
+                                 Berlad |         91        0.14       91.03
+                                  Malmo |         91        0.14       91.16
+                                Polizzi |         91        0.14       91.30
+                                 Braila |         90        0.14       91.44
+                                  W Ind |         90        0.14       91.58
+                           Buenos Aires |         89        0.14       91.71
+                          Castelvetrano |         89        0.14       91.85
+                              Terrasini |         89        0.14       91.98
+                                   Alia |         86        0.13       92.11
+                               Greenock |         86        0.13       92.25
+                                Toritto |         86        0.13       92.38
+                             Campobello |         85        0.13       92.51
+                               Kingston |         85        0.13       92.64
+                               Larkhall |         85        0.13       92.77
+                                  Melfi |         85        0.13       92.89
+                               Partanna |         85        0.13       93.02
+                                Marsala |         84        0.13       93.15
+                                  Xania |         83        0.13       93.28
+                               Cornwall |         82        0.12       93.40
+                             Marigliano |         82        0.12       93.53
+                                 Vicari |         82        0.12       93.65
+                                Piraeus |         81        0.12       93.78
+                                    Rus |         81        0.12       93.90
+                                  Bella |         80        0.12       94.02
+                              S Cataldo |         80        0.12       94.14
+                               Warschaw |         80        0.12       94.27
+                                 Zurich |         80        0.12       94.39
+                                S Paulo |         79        0.12       94.51
+                                     Ta |         79        0.12       94.63
+                          Castellammare |         78        0.12       94.75
+                               Gagliano |         78        0.12       94.87
+                                 Armagh |         77        0.12       94.98
+                              Maddaloni |         77        0.12       95.10
+                                  Pireo |         77        0.12       95.22
+                                  Rowno |         77        0.12       95.33
+                                 Amalfi |         76        0.12       95.45
+                              Groningen |         76        0.12       95.57
+                                 Padula |         76        0.12       95.68
+                              Cervinara |         74        0.11       95.79
+                                      U |         74        0.11       95.91
+                               Blantyre |         73        0.11       96.02
+                                Caiazzo |         73        0.11       96.13
+                                   Prag |         72        0.11       96.24
+                                 Riccia |         71        0.11       96.35
+                              Marseille |         70        0.11       96.45
+                                Sassano |         70        0.11       96.56
+                                Scafati |         70        0.11       96.67
+                                Alimena |         69        0.11       96.77
+                          Christiansand |         69        0.11       96.88
+                                 Vienna |         69        0.11       96.98
+                               Bradford |         68        0.10       97.09
+                              Collesano |         68        0.10       97.19
+                               Minturno |         68        0.10       97.29
+                                Prussia |         68        0.10       97.40
+                            Ventimiglia |         68        0.10       97.50
+                            Campofelice |         67        0.10       97.60
+                                  Teora |         67        0.10       97.70
+                                 Bremen |         66        0.10       97.81
+                                 Lublin |         66        0.10       97.91
+                               Montella |         66        0.10       98.01
+                    Non Immigrant Alien |         66        0.10       98.11
+                             Bisacquino |         65        0.10       98.21
+                                  Massa |         65        0.10       98.30
+                              Atripalda |         64        0.10       98.40
+                                Cardiff |         63        0.10       98.50
+                                S Ninfa |         63        0.10       98.59
+                             Vallelunga |         63        0.10       98.69
+                                  Brest |         62        0.09       98.78
+                                 Gerace |         62        0.09       98.88
+                                 Lievin |         62        0.09       98.97
+                                  Norka |         62        0.09       99.07
+                               S Angelo |         62        0.09       99.16
+                                Samsoun |         62        0.09       99.26
+                               Afragola |         61        0.09       99.35
+                                 Ariano |         61        0.09       99.44
+                                Melilli |         61        0.09       99.54
+                              Misilmeri |         61        0.09       99.63
+                             Motherwell |         61        0.09       99.72
+                                   Naso |         61        0.09       99.81
+                           Serradifalco |         61        0.09       99.91
+                           Vico Equense |         61        0.09      100.00
+                                Agerola |         60        0.42        0.42
+                               Borgetto |         60        0.42        0.84
+                            Castelbuono |         60        0.42        1.26
+                                Milazzo |         60        0.42        1.69
+                               Positano |         60        0.42        2.11
+                                  Teano |         60        0.42        2.53
+                                  Alife |         59        0.41        2.94
+                             Bolognetta |         59        0.41        3.36
+                            Decollatura |         59        0.41        3.77
+                          Ekaterinoslaw |         59        0.41        4.19
+                                 Serino |         59        0.41        4.60
+                            Southampton |         59        0.41        5.01
+                               Llanelly |         58        0.41        5.42
+                                    T A |         58        0.41        5.83
+                                Bancina |         57        0.40        6.23
+                               Besseges |         57        0.40        6.63
+                                 Carini |         57        0.40        7.03
+                                 Dwinsk |         57        0.40        7.43
+                                Saviano |         57        0.40        7.83
+                              Stigliano |         57        0.40        8.23
+                              Partinico |         56        0.39        8.62
+                            Puerto Rico |         56        0.39        9.02
+                                 Scilla |         56        0.39        9.41
+                                Bristol |         55        0.39        9.80
+                              Johnstone |         55        0.39       10.18
+                          Montemaggiore |         55        0.39       10.57
+                                 Pagani |         55        0.39       10.95
+                                 Acerra |         54        0.38       11.33
+                               Andretta |         54        0.38       11.71
+                                   Nola |         54        0.38       12.09
+                                Airdrie |         53        0.37       12.46
+                                Augusta |         53        0.37       12.84
+                         Constantinople |         53        0.37       13.21
+                                Edinbro |         53        0.37       13.58
+                                Neudorf |         53        0.37       13.95
+                             Nottingham |         53        0.37       14.32
+                              Stanislaw |         53        0.37       14.70
+                                Venafro |         53        0.37       15.07
+                               Warschan |         53        0.37       15.44
+                                  Angri |         52        0.37       15.81
+                             Barcellona |         52        0.37       16.17
+                                  Craco |         52        0.37       16.54
+                                  Eboli |         52        0.37       16.90
+                                   Meta |         52        0.37       17.27
+                              Montedoro |         52        0.37       17.63
+                                Rionero |         52        0.37       18.00
+                             S Fratello |         52        0.37       18.36
+                                  Vasto |         52        0.37       18.73
+                                  Brody |         51        0.36       19.09
+                                Buccino |         51        0.36       19.44
+                                  Faeto |         51        0.36       19.80
+                                  Jaffa |         51        0.36       20.16
+                                 Krakau |         51        0.36       20.52
+                               Tripolis |         51        0.36       20.88
+                            Castiglione |         50        0.35       21.23
+                                Chrsand |         50        0.35       21.58
+                                  Elena |         50        0.35       21.93
+                                  Jumet |         50        0.35       22.28
+                                 Nocera |         50        0.35       22.63
+                                  Cania |         49        0.34       22.98
+                                  Capua |         49        0.34       23.32
+                             Collelongo |         49        0.34       23.66
+                                   Down |         49        0.34       24.01
+                               Gragnano |         49        0.34       24.35
+                                Morcone |         49        0.34       24.70
+                           Castellamare |         48        0.34       25.03
+                                Leipzig |         48        0.34       25.37
+                            West Indies |         48        0.34       25.71
+                                 Agnone |         47        0.33       26.04
+                                 Bovino |         47        0.33       26.37
+                          Castrofilippo |         47        0.33       26.70
+                                Curland |         47        0.33       27.03
+                                 Salina |         47        0.33       27.36
+                                  Argos |         46        0.32       27.68
+                                 Bivona |         46        0.32       28.00
+                                   Hull |         46        0.32       28.33
+                                Kolomea |         46        0.32       28.65
+                               Limerick |         46        0.32       28.97
+                              Mirabella |         46        0.32       29.30
+                            Muro Lucano |         46        0.32       29.62
+                               S Donato |         46        0.32       29.94
+                              St Helens |         46        0.32       30.26
+                                Sulmona |         46        0.32       30.59
+                                  Homel |         45        0.32       30.90
+                                  Kieff |         45        0.32       31.22
+                          Pontelandolfo |         45        0.32       31.54
+                                    Rio |         45        0.32       31.85
+                             S Giovanni |         45        0.32       32.17
+                                Tegiano |         45        0.32       32.48
+                               Villalba |         45        0.32       32.80
+                                      B |         44        0.31       33.11
+                                Biccari |         44        0.31       33.42
+                               Botosani |         44        0.31       33.73
+                                Ciminna |         44        0.31       34.04
+                                  Greci |         44        0.31       34.34
+                                  Kovno |         44        0.31       34.65
+                              Mistretta |         44        0.31       34.96
+                             S Caterina |         44        0.31       35.27
+                               San Jose |         44        0.31       35.58
+                                Sanfele |         44        0.31       35.89
+                                  Wigan |         44        0.31       36.20
+                              Bellshill |         43        0.30       36.50
+                                 Beyrut |         43        0.30       36.80
+                              Carovilli |         43        0.30       37.10
+                                Cermini |         43        0.30       37.41
+                             Coatbridge |         43        0.30       37.71
+                                Laibach |         43        0.30       38.01
+                         London England |         43        0.30       38.31
+                               Petralia |         43        0.30       38.61
+                                  Polla |         43        0.30       38.92
+                                  South |         43        0.30       39.22
+                                  Austr |         42        0.29       39.51
+                                Calitri |         42        0.29       39.81
+                           Castelfranco |         42        0.29       40.10
+                                 Grotte |         42        0.29       40.40
+                             Kilmarnock |         42        0.29       40.69
+                              Pettorano |         42        0.29       40.99
+                                    Pos |         42        0.29       41.28
+                              Regalbuto |         42        0.29       41.58
+                                 Slonim |         42        0.29       41.87
+                                 Tarnow |         42        0.29       42.17
+                                 Atrani |         41        0.29       42.45
+                          Caltabellotta |         41        0.29       42.74
+                            Castroreale |         41        0.29       43.03
+                                 Ragusa |         41        0.29       43.32
+                         Rio De Janeiro |         41        0.29       43.61
+                                Roubaix |         41        0.29       43.89
+                                     Sa |         41        0.29       44.18
+                                  Jossy |         40        0.28       44.46
+                            Marianopoli |         40        0.28       44.74
+                           Montecorvino |         40        0.28       45.02
+                                Suwalky |         40        0.28       45.31
+                             Throndhjem |         40        0.28       45.59
+                                   Tusa |         40        0.28       45.87
+                                 Wishaw |         40        0.28       46.15
+                                  Bacau |         39        0.27       46.42
+                                 Bolton |         39        0.27       46.70
+                                 Burgio |         39        0.27       46.97
+                             Czernowitz |         39        0.27       47.24
+                               Goteborg |         39        0.27       47.52
+                                 L'Pool |         39        0.27       47.79
+                                Warshaw |         39        0.27       48.07
+                                 Aversa |         38        0.27       48.33
+                                 Batoum |         38        0.27       48.60
+                             Calabritto |         38        0.27       48.87
+                                Dresden |         38        0.27       49.13
+                               Faicchio |         38        0.27       49.40
+                              Frosolone |         38        0.27       49.67
+                                 Sciara |         38        0.27       49.93
+                               Sorrento |         38        0.27       50.20
+                             Strassburg |         38        0.27       50.47
+                                Warshau |         38        0.27       50.73
+                                Amantea |         37        0.26       50.99
+                                Baucina |         37        0.26       51.25
+                                Bellona |         37        0.26       51.51
+                               Caposele |         37        0.26       51.77
+                               Contessa |         37        0.26       52.03
+                                   Lago |         37        0.26       52.29
+                             Laurenzano |         37        0.26       52.55
+                                    Pol |         37        0.26       52.81
+                                 Prizzi |         37        0.26       53.07
+                             Rutherglen |         37        0.26       53.33
+                                  Skien |         37        0.26       53.59
+                                 Slutzk |         37        0.26       53.85
+                                  Agira |         36        0.25       54.10
+                           Buenos Ayres |         36        0.25       54.36
+                               Fisciano |         36        0.25       54.61
+                             Glucksthal |         36        0.25       54.86
+                                Parenti |         36        0.25       55.12
+                                 Sparte |         36        0.25       55.37
+                                 Casoli |         35        0.25       55.61
+                                Drammen |         35        0.25       55.86
+                                 Dudley |         35        0.25       56.11
+                                Halifax |         35        0.25       56.35
+                              Jerusalem |         35        0.25       56.60
+                              Jugo-Slav |         35        0.25       56.84
+                                 Kassel |         35        0.25       57.09
+                              Kischinew |         35        0.25       57.33
+                           Kristiansund |         35        0.25       57.58
+                                  Lpool |         35        0.25       57.83
+                                 Mandal |         35        0.25       58.07
+                                 Oldham |         35        0.25       58.32
+                            S Salvatore |         35        0.25       58.56
+                               Salandra |         35        0.25       58.81
+                                Swansea |         35        0.25       59.05
+                               Tarnopol |         35        0.25       59.30
+                                  Troia |         35        0.25       59.55
+                              Verbicaro |         35        0.25       59.79
+                               Bukarest |         34        0.24       60.03
+                             Calatafimi |         34        0.24       60.27
+                                Farsund |         34        0.24       60.51
+                                Gallico |         34        0.24       60.75
+                                 Larvik |         34        0.24       60.99
+                                 Merida |         34        0.24       61.22
+                               Monreale |         34        0.24       61.46
+                             Montalbano |         34        0.24       61.70
+                           Poggiomarino |         34        0.24       61.94
+                                  Prata |         34        0.24       62.18
+                             Ricigliano |         34        0.24       62.42
+                              Accettura |         33        0.23       62.65
+                                 Airola |         33        0.23       62.88
+                               Alberona |         33        0.23       63.11
+                               Alfedena |         33        0.23       63.35
+                                  Basel |         33        0.23       63.58
+                                      C |         33        0.23       63.81
+                                 Fanano |         33        0.23       64.04
+                               Fornelli |         33        0.23       64.27
+                                 Giarre |         33        0.23       64.50
+                               Maschito |         33        0.23       64.74
+                             Monteforte |         33        0.23       64.97
+                              Newcastle |         33        0.23       65.20
+                                  Panni |         33        0.23       65.43
+                                  Pirie |         33        0.23       65.66
+                               Rogliano |         33        0.23       65.89
+                                Sealand |         33        0.23       66.13
+                                  Apice |         32        0.22       66.35
+                               Arbroath |         32        0.22       66.58
+                                 Athens |         32        0.22       66.80
+                                  Berne |         32        0.22       67.02
+                             Bialystock |         32        0.22       67.25
+                           Castelgrande |         32        0.22       67.47
+                                Esbjerg |         32        0.22       67.70
+                                  Essen |         32        0.22       67.92
+                              Gasperina |         32        0.22       68.15
+                               Grimstad |         32        0.22       68.37
+                                 Landau |         32        0.22       68.60
+                                   Lens |         32        0.22       68.82
+                                  Maida |         32        0.22       69.05
+                              Montevago |         32        0.22       69.27
+                                 Popoli |         32        0.22       69.50
+                             Senigallia |         32        0.22       69.72
+                              Spadafora |         32        0.22       69.95
+                              Stanislau |         32        0.22       70.17
+                             Stevenston |         32        0.22       70.40
+                                  A'Dam |         31        0.22       70.61
+                             Alexandrie |         31        0.22       70.83
+                                   Bern |         31        0.22       71.05
+                                Cassano |         31        0.22       71.27
+                               Cimitile |         31        0.22       71.48
+                                  Derby |         31        0.22       71.70
+                                Ferrara |         31        0.22       71.92
+                                Godrano |         31        0.22       72.14
+                                  Govan |         31        0.22       72.35
+                            Helsingborg |         31        0.22       72.57
+                               Lanciano |         31        0.22       72.79
+                            Mexico City |         31        0.22       73.01
+                                  Nusco |         31        0.22       73.23
+                         Palo Del Colle |         31        0.22       73.44
+                              Resuttano |         31        0.22       73.66
+                            S Valentino |         31        0.22       73.88
+                                 Smyrne |         31        0.22       74.10
+                             So America |         31        0.22       74.31
+                              The Hague |         31        0.22       74.53
+                              Trondhjem |         31        0.22       74.75
+                            Valledolino |         31        0.22       74.97
+                                 Alvito |         30        0.21       75.18
+                                 Avella |         30        0.21       75.39
+                                 Boiano |         30        0.21       75.60
+                               Bukowina |         30        0.21       75.81
+                           Castelvetere |         30        0.21       76.02
+                               Damascus |         30        0.21       76.23
+                              Drontheim |         30        0.21       76.44
+                              Gibraltar |         30        0.21       76.65
+                               Giuliana |         30        0.21       76.86
+                              Harlingen |         30        0.21       77.07
+                             Laurenzana |         30        0.21       77.28
+                                Marzano |         30        0.21       77.49
+                                Mogilew |         30        0.21       77.71
+                                Pachino |         30        0.21       77.92
+                                  Palmi |         30        0.21       78.13
+                                Pollica |         30        0.21       78.34
+                                  Rende |         30        0.21       78.55
+                                   Rodi |         30        0.21       78.76
+                                  Rssia |         30        0.21       78.97
+                                  Ruoti |         30        0.21       79.18
+                               S Pietro |         30        0.21       79.39
+                                   Slov |         30        0.21       79.60
+                         Stella Cilento |         30        0.21       79.81
+                               Tonsberg |         30        0.21       80.02
+                                   Uden |         30        0.21       80.23
+                            Villafranca |         30        0.21       80.44
+                             Capestrano |         29        0.20       80.65
+                              Cianciana |         29        0.20       80.85
+                                 Dolina |         29        0.20       81.05
+                                   Fano |         29        0.20       81.26
+                                Focsani |         29        0.20       81.46
+                                 Grodna |         29        0.20       81.67
+                                 Kandel |         29        0.20       81.87
+                              Lillesand |         29        0.20       82.07
+                             Monteleone |         29        0.20       82.28
+                                  Perth |         29        0.20       82.48
+                                Potenzo |         29        0.20       82.68
+                                   Rose |         29        0.20       82.89
+                                 Rusfia |         29        0.20       83.09
+                                      S |         29        0.20       83.29
+                             S Guiseppe |         29        0.20       83.50
+                              S Martino |         29        0.20       83.70
+                                 Sambor |         29        0.20       83.91
+                               San Fele |         29        0.20       84.11
+                                  Sligo |         29        0.20       84.31
+                             Villafrati |         29        0.20       84.52
+                                 Almelo |         28        0.20       84.71
+                             Aprigliano |         28        0.20       84.91
+                                   Belz |         28        0.20       85.11
+                               Beresina |         28        0.20       85.30
+                                 Bogota |         28        0.20       85.50
+                               Capaccio |         28        0.20       85.70
+                               Carleone |         28        0.20       85.89
+                                Carolei |         28        0.20       86.09
+                                 Celano |         28        0.20       86.29
+                             Gothenberg |         28        0.20       86.48
+                                  Kassa |         28        0.20       86.68
+                                 Kobrin |         28        0.20       86.88
+                                  Leith |         28        0.20       87.07
+                               Longford |         28        0.20       87.27
+                                  Mlawa |         28        0.20       87.47
+                                Montese |         28        0.20       87.66
+                                  Palma |         28        0.20       87.86
+                                Picerno |         28        0.20       88.06
+                                 S Amer |         28        0.20       88.25
+                               Santiago |         28        0.20       88.45
+                               Saponara |         28        0.20       88.65
+                                Solofra |         28        0.20       88.84
+                                 Styria |         28        0.20       89.04
+                                  Tyrol |         28        0.20       89.24
+                                 Veroli |         28        0.20       89.43
+                                 Alatri |         27        0.19       89.62
+                                Antopol |         27        0.19       89.81
+                                   Anzi |         27        0.19       90.00
+                                B Aires |         27        0.19       90.19
+                                  Barga |         27        0.19       90.38
+                           Boscotrecase |         27        0.19       90.57
+                               Casabona |         27        0.19       90.76
+                                Centola |         27        0.19       90.95
+                                 Durham |         27        0.19       91.14
+                             Ferrandina |         27        0.19       91.33
+                                  Havre |         27        0.19       91.52
+                                Kilsyth |         27        0.19       91.71
+                                  Makow |         27        0.19       91.90
+                               Monaghan |         27        0.19       92.09
+                              Mussomeli |         27        0.19       92.28
+                                Paterno |         27        0.19       92.47
+                                  Posen |         27        0.19       92.66
+                                Procida |         27        0.19       92.84
+                                      R |         27        0.19       93.03
+                                 Roseto |         27        0.19       93.22
+                                    S A |         27        0.19       93.41
+                                 Sturno |         27        0.19       93.60
+                                 Tarsia |         27        0.19       93.79
+                                      A |         26        0.18       93.98
+                                Ateleta |         26        0.18       94.16
+                                 Baiano |         26        0.18       94.34
+                            Baillieston |         26        0.18       94.52
+                                Balvano |         26        0.18       94.71
+                                Bitonto |         26        0.18       94.89
+                                 Bosnia |         26        0.18       95.07
+                                  Canna |         26        0.18       95.25
+                                    Csl |         26        0.18       95.44
+                                  Damas |         26        0.18       95.62
+                               Domanico |         26        0.18       95.80
+                            Dunfermline |         26        0.18       95.98
+                            Havana Cuba |         26        0.18       96.17
+                         Jekaterinoslaw |         26        0.18       96.35
+                               Mannheim |         26        0.18       96.53
+                              Moliterno |         26        0.18       96.71
+                              Morriston |         26        0.18       96.90
+                                Oliveto |         26        0.18       97.08
+                                 Orsara |         26        0.18       97.26
+                                Ouddorp |         26        0.18       97.44
+                               Platania |         26        0.18       97.63
+                                Polermo |         26        0.18       97.81
+                              Racalmuto |         26        0.18       97.99
+                        Reggio Calabria |         26        0.18       98.17
+                                  Risor |         26        0.18       98.36
+                               S Egidio |         26        0.18       98.54
+                             S Giuseppe |         26        0.18       98.72
+                                 Shotts |         26        0.18       98.90
+                                   Sora |         26        0.18       99.09
+                                 Speier |         26        0.18       99.27
+                                  Stryj |         26        0.18       99.45
+                                Us Born |         26        0.18       99.63
+                            Vinchiaturo |         26        0.18       99.82
+                               Vittoria |         26        0.18      100.00
+----------------------------------------+-----------------------------------
+
 
 
 
