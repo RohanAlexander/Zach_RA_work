@@ -21,14 +21,15 @@ so not all being pushed to modern.)
 */
 
 
+
 //////////////////////// Initial set up and load data ////////////////////////
 clear all
 
 //set more off, permanently
 set more off
-//set more off, permanently
 
 use "/hdir/0/monicah/Desktop/EIbrothers18921924.dta"
+
 
 
 //////////////////////// Start separating the cities and countries ////////////////////////
@@ -114,9 +115,10 @@ replace origin_city = "Sweden" if (origin_city == "Sweeden")
 replace origin_city = "Sydney" if (origin_city=="Sidney") | (origin_city=="Sydney/Australia") 
 replace origin_city = "Trinidad and Tobago" if (origin_city == "Trinadad")
 replace origin_city = "Vienna" if (origin_city == "Vienne") & (origin_country == "Austria")
-replace origin_city = "USA" if (origin_city == "U S A") ///
+replace origin_city = "United States" if (origin_city == "U S A") ///
 	| (origin_city == "U S Born") | (origin_city == "US") ///
 	| (origin_city == "America") | (origin_city == "Usa")
+
 
 
 //////////////////////// Swap countries and cities as appropriate ////////////////////////
@@ -142,26 +144,6 @@ replace origin_city = origin_city_tmp
 drop origin_country_tmp
 drop origin_city_tmp
 
-// Create a flag indicating whether the origin_country is a country
-// Initial list is from http://m.state.gov/mc17517.htm, but with United States added, and some formatting ', ,, - removed. After that there are a few countries that were added (see the final line of the macro) because they are reasonable as historical countries
-// drop is_country_flag
-gen is_country_flag = .
-local list_of_countries `" "Afghanistan" "Albania" "Algeria" "Andorra" "Angola" "Antigua and Barbuda" "Argentina" "Armenia" "Aruba" "Australia" "Austria" "Azerbaijan" "Bahamas" "Bahrain" "Bangladesh" "Barbados" "Belarus" "Belgium" "Belize" "Benin" "Bhutan" "Bolivia" "'
-local list_of_countries `" `list_of_countries' "Bosnia and Herzegovina" "Botswana" "Brazil" "Brunei" "Bulgaria" "Burkina Faso" "Burma" "Burundi" "Cambodia" "Cameroon" "Canada" "Cabo Verde" "Central African Republic" "Chad" "Chile" "China" "Colombia" "Comoros" "Congo" "Congo" "Costa Rica"  "'
-local list_of_countries `" `list_of_countries' "Cote d Ivoire" "Croatia" "Cuba" "Curacao" "Cyprus" "Czech Republic" "Denmark" "Djibouti" "Dominica" "Dominican Republic" "Ecuador" "Egypt" "El Salvador" "Equatorial Guinea" "Eritrea" "Estonia" "Ethiopia" "Fiji" "Finland" "France" "Gabon" "Gambia" "'
-local list_of_countries `" `list_of_countries' "Georgia" "Germany" "Ghana" "Greece" "Grenada" "Guatemala" "Guinea" "Guinea Bissau" "Guyana" "Haiti" "Holy See" "Honduras" "Hong Kong" "Hungary" "Iceland" "India" "Indonesia" "Iran" "Iraq" "Ireland" "Israel" "Italy" "Jamaica" "Japan" "Jordan" "Kazakhstan" "'
-local list_of_countries `" `list_of_countries' "Kenya" "Kiribati" "Noth Korea" "South Korea" "Kosovo" "Kuwait" "Kyrgyzstan" "Laos" "Latvia" "Lebanon" "Lesotho" "Liberia" "Libya" "Liechtenstein" "Lithuania" "Luxembourg" "Macau" "Macedonia" "Madagascar" "Malawi" "Malaysia" "Maldives" "Mali" "Malta" "'
-local list_of_countries `" `list_of_countries' "Marshall Islands" "Mauritania" "Mauritius" "Mexico" "Micronesia" "Moldova" "Monaco" "Mongolia" "Montenegro" "Morocco" "Mozambique" "Namibia" "Nauru" "Nepal" "Netherlands" "Netherlands Antilles" "New Zealand" "Nicaragua" "Niger" "Nigeria" "North Korea" "'
-local list_of_countries `" `list_of_countries' "Norway" "Oman" "Pakistan" "Palau" "Palestinian Territories" "Panama" "Papua New Guinea" "Paraguay" "Peru" "Philippines" "Poland" "Portugal" "Qatar" "Romania" "Russia" "Rwanda" "Saint Kitts and Nevis" "Saint Lucia" "Saint Vincent and the Grenadines" "Samoa" "'
-local list_of_countries `" `list_of_countries' "San Marino" "Sao Tome and Principe" "Saudi Arabia" "Senegal" "Serbia" "Seychelles" "Sierra Leone" "Singapore" "Sint Maarten" "Slovakia" "Slovenia" "Solomon Islands" "Somalia" "South Africa" "South Korea" "South Sudan" "Spain" "Sri Lanka" "Sudan" "Suriname" "'
-local list_of_countries `" `list_of_countries' "Swaziland" "Sweden" "Switzerland" "Syria" "Taiwan" "Tajikistan" "Tanzania" "Thailand" "Timor Leste" "Togo" "Tonga" "Trinidad and Tobago" "Tunisia" "Turkey" "Turkmenistan" "Tuvalu" "Uganda" "Ukraine" "United Arab Emirates" "United Kingdom" "Uruguay" "Uzbekistan" "Vanuatu" "Venezuela" "Vietnam" "Yemen" "Zambia" "Zimbabwe" "'
-local list_of_countries `" `list_of_countries' "United States" "Galicia" "'
-
-// display `"`list_of_countries'"'
-// Iterate through the list of countries and add a flag if it's not a country.  
-foreach country of local list_of_countries {
-	quietly replace is_country_flag = 1 if (origin_country == "`country'") 
-}
 
 
 //////////////////////// Fix remaining messy countries (some of these are more than just typos - possible errors introduced here)
@@ -441,605 +423,532 @@ replace origin_country = "United States" if (origin_country == "USA (Casamicclol
 	| (origin_country == "Montana") | (origin_country == "Nyork")
 replace origin_country = "Venezuela" if (origin_country == "Venez")
 replace origin_country = "Wales" if (origin_country=="Swales")
+
+
+// Do the same as above, but use loops and locals instead - eh Statan.
+
+local Algeria `" "Konstantin" "'
+foreach town of local Algeria {
+	quietly replace origin_country = "Algeria" if (origin_country == "`town'")
+}
+
+local AntiguaAndBarbuda `" "Antigua" "'
+foreach town of local AntiguaAndBarbuda {
+	quietly replace origin_country = "Antigua and Barbuda" if (origin_country == "`town'")
+}
+
+local Argentina `" "Rosario" "Entre Rios" "B' Aires" "Caraffa" "Monte" "'
+foreach town of local Argentina {
+	quietly replace origin_country = "Argentina" if (origin_country == "`town'")
+}
+
+local Armenia `" "Armania" "'
+foreach town of local Armenia {
+	quietly replace origin_country = "Armenia" if (origin_country == "`town'")
+}
+
+local Australia `" "Ballina" "Bronte" "Sydney" "'
+foreach town of local Australia {
+	quietly replace origin_country = "Australia" if (origin_country == "`town'")
+}
+
+local Austria `" "Graz" "Tirol" "Berndorf" "L Austria" "Rausaitz" "Freudenthal" "Karnten" "Tyrol" "Styria" "Vienna" "Wien" "'
+foreach town of local Austria {
+	quietly replace origin_country = "Austria" if (origin_country == "`town'")
+}
+
+local Bahrain `" "Ali" "'
+foreach town of local Bahrain {
+	quietly replace origin_country = "Bahrain" if (origin_country == "`town'")
+}
+
+local Barbados `" " Christ Church, Barbados, W. I." " Christ Ch, Barbados, W. I." " St. Thomas, Barbados, W. I." " Bridgetown, Barbados, W. Ind." " Hastings, Barbados, W. Ind." "'
+foreach town of local Barbados {
+	replace origin_country = "Barbados" if (origin == "`town'")
+}
+
+local Belarus `" "Bobruisk" "Sluck" "Brest Lit" "Sluzk" "Antopol" "Kobrin" "Beresina" "Grodna" "Mogilew" "Slutzk" "Slonim" "Homel" "'
+foreach town of local Belarus {
+	quietly replace origin_country = "Belarus" if (origin_country == "`town'")
+}
+
+local Belgium `" "Thielt" "Knocke" "Gent" "Nevele" "Belgian" "Verviers" "Beveren" "Jemappes" "Vracene" "Antwerpen" "Bassevelde" "Brussels" "Jumet" "Antwerp" "'
+foreach town of local Belgium {
+	quietly replace origin_country = "Belgium" if (origin_country == "`town'")
+}
+
+local Bermuda `" " Hamilton, Bermuda, W I" " Hamilton, Bermuda, W. I." " Hamilton, Bermuda, W. Ind." " Pembroke, Bermuda, W. Ind" " Paget, Bermuda, W. Ind." " Warwick, Bermuda, W. Ind" "'
+foreach town of local Bermuda {
+	replace origin_country = "Bermuda" if (origin == "`town'")
+}
+
+local BosniaAndHerzegovina `" "Resina" "'
+foreach town of local BosniaAndHerzegovina {
+	quietly replace origin_country = "Bosnia and Herzegovina" if (origin_country == "`town'")
+}
+
+local Brazil `" "Rio" "Buenos Ayres" "Sao Paulo" "S Paulo" "B Aires" "Buenos Aires" "Rio De Janeiro" "Bonito" "Rio De Janerio" "San Paulo" "Rio De Janiero" "'
+foreach town of local Brazil {
+	quietly replace origin_country = "Brazil" if (origin_country == "`town'")
+}
+
+local BritishGuiana `" "British Guiana" "'
+foreach town of local BritishGuiana {
+	quietly replace origin_country = "British Guiana" if (origin_country == "`town'")
+}
+
+local Bulgaria `" "Kamenetz" "'
+foreach town of local Bulgaria {
+	quietly replace origin_country = "Bulgaria" if (origin_country == "`town'")
+}
+
+local Canada `" "Wasa" "Terranova" "Toronto" "Montreal" "Halifax" "Airdrie" "'
+foreach town of local Canada {
+	quietly replace origin_country = "Canada" if (origin_country == "`town'")
+}
+
+local Chile `" "Santiago" "'
+foreach town of local Chile {
+	quietly replace origin_country = "Chile" if (origin_country == "`town'")
+}
+
+local Colombia `" "Salento" "Barranquilla" "Bogota" "'
+foreach town of local Colombia {
+	quietly replace origin_country = "Colombia" if (origin_country == "`town'")
+}
+
+local Croatia `" "Istria" "Bunic" "Dalmacia" "Lissa" "Ogulin" "Castel S Giorgio" "Mrkopalj" "Fuzine" "'
+foreach town of local Croatia {
+	quietly replace origin_country = "Croatia" if (origin_country == "`town'")
+}
+
+local Cuba `" "Cuban" "Habana" "Havana Cuba" "Havana" "'
+foreach town of local Cuba {
+	quietly replace origin_country = "Cuba" if (origin_country == "`town'")
+}
+
+local Cuba `" " Havana, Cuba, W. I." " Bayate, Cuba, W. I." " Havana, Cuba, W. Ind." " Havana, Cuba, W Ind." " Santiago, Cuba, W Ind" " Camaguey, Cuba, W. Ind." "'
+foreach town of local Cuba {
+	replace origin_country = "Cuba" if (origin == "`town'")
+}
+
+local Cyprus `" "Nicosia" "Chypre" "'
+foreach town of local Cyprus {
+	quietly replace origin_country = "Cyprus" if (origin_country == "`town'")
+}
+
+local Czechoslovakia `" "Tchecoslovakia" "T Slov" "T Slovak" "Tcheco-Slovakie" "Tcheco-Slovaky" "Teplitz" "Pisek" "Krasna" "Krasno" "Pecky" "Plzen" "Radomysl" "Ledenice" "Prag" "'
+foreach town of local Czechoslovakia {
+	quietly replace origin_country = "Czech Republic" if (origin_country == "`town'")
+}
+
+local Denmark `" "Aalborg" "Hjorring" "Funen" "Bornholm" "Aadalen" "Aarhus" "Danemark" "Esbjerg" "Christiania" "Copenhagen" "'
+foreach town of local Denmark {
+	quietly replace origin_country = "Denmark" if (origin_country == "`town'")
+}
+
+local DominicanRepublic `" "Sto Dgo" "'
+foreach town of local DominicanRepublic {
+	quietly replace origin_country = "Dominican Republic" if (origin_country == "`town'")
+}
+
+local DominicanRepublic `" " Plo Plata, Dom. Rep., W. I." " Pto Plata, St. Dom., W. I." " Pto Plata, W. I." " Sanchez, D.R., W. Ind." "'
+foreach town of local DominicanRepublic {
+	quietly replace origin_country = "Dominican Republic" if (origin == "`town'")
+}
+
+local Egypt `" "Cario" "Alexandrie" "'
+foreach town of local Egypt {
+	quietly replace origin_country = "Egypt" if (origin_country == "`town'")
+}
+
+local ElSalvador `" "San Salvador" "'
+foreach town of local ElSalvador {
+	quietly replace origin_country = "El Salvador" if (origin_country == "`town'")
+}
+
+local England `" "Gibraltar" "Derby" "Oldham" "Lpool" "L'Pool" "Curland" "Bristol" "Motherwell" "Bradford" "Durham" "Perth" "Newcastle" "Coatbridge" "Bolton" "Nottingham" "Hull" "Leeds" "Cornwall" "Wigan" "London England" "Southampton" "Barrow" "Norfolk" "Chesterfield" "Sussex" "Surrey" "Lancaster" "Tunstall" "Liverpool" "Manchester" "Liverpool/England" "Plymouth" "Hirst" "Leigh" "Burnley" "Sunderland" "Walsall" "Grimsby" "Preston" "Devon" "Norwich" "Acklington" "Stoke" "Burslem" "York" "Bacup" "Blackburn" "Sala" "Stafford" "Newcastle On Tyne" "Bootle" "Brighton" "Kidderminster" "Leicester" "Portsmouth" "Tipton" "Dover" "Emgland" "Ilford" "Kendal" "Rochdale" "Workington" "Ashington" "Barnsley" "Gateshead" "Shipley" "Englad" "'
+foreach town of local England {
+	quietly replace origin_country = "England" if (origin_country == "`town'")
+}
+
+local Estonia `" "Esthonia" "'
+foreach town of local Estonia {
+	quietly replace origin_country = "Estonia" if (origin_country == "`town'")
+}
+
+local Finland `" "Finl" "Ylistaro" "Hango" "'
+foreach town of local Finland {
+	quietly replace origin_country = "Finland" if (origin_country == "`town'")
+}
+
+local France `" "Corbara" "Gran" "French" "Elsass" "Villetta" "Pire" "Lussin" "Massa C" "Arcis" "Lyon" "Montigny" "Avion" "Taverna" "Auzi" "Decazeville" "Piana" "Tassy" "Belfort" "Corse" "Gard" "Marchienne" "Lille" "St Medard" "Taurien" "Strassburg" "Besseges" "Lievin" "Brest" "Marseilles" "Marseille" "Roubaix" "Paris" "Martinique" "'
+foreach town of local France {
+	quietly replace origin_country = "France" if (origin_country == "`town'")
+}
+
+local Georgia `" "Batoum" "'
+foreach town of local Georgia {
+	quietly replace origin_country = "Georgia" if (origin_country == "`town'")
+}
+
+local Germany `" "Bruch" "Munchen" "Rohrbach" "Dusseldorf" "Bavaria" "Solingen" "Gelsenkirchen" "Oberhausen" "Sande" "Warsow" "Zernigow" "Elberfeld" "Hannover" "Altona" "Frankfurt" "Bergdorf" "Dronthjem" "Nikolajew" "Flensburg" "Neuburg" "Beyreuth" "Chemnitz" "Harburg" "Neustadt" "Schonberg" "Worms" "Beyruth" "Kolna" "Sulz" "Mannheim" "Landau" "Essen" "Kassel" "Leipzig" "Bremen" "Berlin" "Hamburg" "Dresden" "'
+foreach town of local Germany {
+	quietly replace origin_country = "Germany" if (origin_country == "`town'")
+}
+
+local Greece `" "Sparte" "Argos" "Tripolis" "Pireo" "Piraeus" "Piree" "Sparta" "Athens" "Xania" "Piraens" "Icaria" "Smyrna" "Castoria" "Grecia" "Crete" "Mantinia" "Grevena" "Laconia" "Corinthia" "Patras" "Chios" "Epire" "Florina" "Sparti" "Corinth" "Corinthe" "Le Piree" "Leonidion" "Creta" "Elgin" "Megalopolis" "Syra" "'
+foreach town of local Greece {
+	quietly replace origin_country = "Greece" if (origin_country == "`town'")
+}
+
+local Haiti `" "Port Au Prince" "Hayti" "'
+foreach town of local Haiti {
+	quietly replace origin_country = "Haiti" if (origin_country == "`town'")
+}
+
+local Hungary `" "Ungarn" "Budapest" "'
+foreach town of local Hungary {
+	quietly replace origin_country = "Hungary" if (origin_country == "`town'")
+}
+
+local Ireland `" "Castlerea" "Galway" "Kilrush" "Clonmel" "Listowel" "Cavan" "Dingle" "Drogheda" "Kerry" "Tralee" "Tipperary" "Waterford" "Ballinrobe" "Killarney" "Thurles" "Leitrim" "Ballyjamesduff" "Co Galway" "Kenmare" "Killaloe" "Swinford" "Bantry" "Castleisland" "Kildare" "Longford" "Sligo" "Donegal" "Limerick" "Dublin" "'
+foreach town of local Ireland {
+	quietly replace origin_country = "Ireland" if (origin_country == "`town'")
+}
+
+local Israel `" "Jaffa" "Jerusalem" "'
+foreach town of local Israel {
+	quietly replace origin_country = "Israel" if (origin_country == "`town'")
+}
+
+local Italy `" "Balestrate" "Bientina" "Caserto" "Castellamonte" "Esperia" "Falerna" "Isernia" "Mineo" "S Vito" "Tirolo" "Accadia" "Carlopoli" "Ceccano" "Celico" "Cervino" "Cropani" "Lascari" "Lauro" "Lucera" "Marcianise" "Perito" "Roccamonfina" "Rovito" "S Marco" "Sassari" "Sicignano" "Alvignano" "Caltavuturo" "Camposano" "Casacalenda" "Castelpetroso" "Cicciano" "Deliceto" "Lacedonia" "Larino" "Licata" "Lida" "Ottone" "Pisciotta" "Poggioreale" "Ponza" "Atessa" "Castelfranci" "Castellana" "Castrovillari" "Conflenti" "Formia" "Gangi" "Lettere" "Mendicino" "Montemiletto" "Montesano" "Palmero" "Pizzone" "S Leucio" "Salemi" "Venosa" "Asti" "Atella" "Augri" "Campochiaro" "Casandrino" "Corio" "Dragoni" "Fivizzano" "Librizzi" "Matera" "Mercogliano" "Mignano" "Monteroduni" "Ortucchio" "Pellaro" "Pescia" "Pignola" "Pratola" "R Calabria" "S Arsenio" "S Biase" "Solopaca" "Te" "Agropoli" "Bagnoli" "Bianchi" "Bracigliano" "Caivano" "Casamicciola" "Castellabate" "Cinisi" "Forino" "Forio" "Gimigliano" "Guardiagrele" "Mazzara" "Mesfina" "Milan" "Montefusco" "Oriolo" "Palazzo Adriano" "Palena" "Roccadaspide" "Rometta" "S Elia" "S Lorenzo" "S Stefano C" "Sermide" "Sersale" "Siderno" "Ascoli Piceno" "Baragiano" "Bonefro" "Carbonara" "Catansaro" "Coreglia" "Gesso" "Montefalcione" "Ortona" "Pacentro" "Palerno" "Plati" "Riesi" "S Andrea" "Serrastretta" "Spinoso" "Vittorio" "Baranello" "Barletta" "Bedonia" "Bisaccia" "Bucciano" "Campobosso" "Caramanico" "Casenza" "Cassino" "Celenza" "Fontechiari" "Galdo" "Galizien" "Geraci" "Gioia Del Colle" "Maranola" "Medicina" "Moschiano" "Petina" "Reggio Calab" "S Mauro" "Salemo" "Secondigliano" "Senerchia" "Sicely" "Terlizzi" "Trani" "Vacri" "Valperga" "Asiago" "Campofiorito" "Carrara" "Castrogiovanni" "Ferrazzano" "Fossalto" "Frosinone" "Gildone" "Giovinazzo" "Graguano" "Introdacqua" "Ischia" "Italyy" "Longano" "Marano" "Marcellinara" "Marliana" "Militello" "Minori" "Modugno" "Monopoli" "Morolo" "Pastena" "Riccio" "Ruviano" "S Maria" "S Mauro Forte" "S Pier Niceto" "S Prisco" "Sepino" "Valguarnera" "Varsi" "Venezia" "Villanova" "Acireale" "Castellano" "Catona" "Forenza" "Francavilla" "Frigento" "Grumo App" "Itri" "Locana" "Lucito" "Mantova" "Montagano" "Montecalvo" "Montelepre" "Paduli" "Palomonte" "Penne" "Petrizzi" "Pietramelara" "Pietraperzia" "Postiglione" "Pozzilli" "Reggio E" "Resultano" "Riposto" "Rocca" "Roccapalumba" "S Angelo Lombardi" "S Antonio" "S Paolina" "Salle" "Siano" "Sperlinga" "St Domingo" "St Martins" "Viareggio" "Viggiano" "Alberobello" "Altamura" "Biella" "Briano" "Busso" "Caggiano" "Calascio" "Calvello" "Campolieto" "Candela" "Casagiove" "Casalnuovo" "Cattanissetta" "Ceppaloni" "Cerreto" "Cesaro" "Cigliano" "Corleto Pert" "Galluccio" "Giffone" "Grammichele" "Grotteria" "Guarcino" "Laviano" "Linguaglossa" "Lioni" "Macerata" "Norcia" "Orentano" "Piedimonte" "Pietradefusi" "Pietraroia" "Polizzi Generosa" "S Angelo L" "S Giorgio" "Sstefano" "Tricarico" "Trieste" "Tufino" "Arienzo" "Auletta" "Auronzo" "Bagnara" "Bernalda" "Bucchianico" "Calascibetta" "Carpineto" "Castelforte" "Ceraso" "Felitto" "Ficarazzi" "Formicola" "Grimaldi" "Italy South" "Limatola" "Manziana" "Messino" "Oliveto Citra" "Opi" "Ottati" "Pietrastornina" "Pistoia" "Polistena" "Pontecorvo" "Posada" "Recale" "Ripabottoni" "Roccarainola" "S Antimo" "S Bartolomeo" "S Croce" "Scigliano" "Sermide Mantova" "Toretto" "Tramonti" "Tursi" "Vallata" "Varese" "Acerno" "Arpaia" "Arzano" "Ascea" "Avezzano" "Caltanisfetta" "Campobano" "Campobapo" "Capannori" "Cartoceto" "Chiavari" "Cortale" "Forio D'Ischia" "Gratteri" "Grumo Appula" "Liveri" "Longobucco" "Marlia" "Martone" "Moiano" "Molina" "Monastero" "Monte S Angelo" "Montemagno" "Montemarciano" "North Italy" "Ofena" "Palermo Sicily" "Paternopoli" "Patrica" "Pedara" "Pellezzano" "Perano" "Pescasseroli" "Piaggine" "Po" "Rapino" "Rapolla" "Roccamontepiano" "Roccaraso" "S Agata Dei Goti" "S Agnello" "S Eusanio" "S Felice" "S Gregorio" "S Gregorio M" "S Nicola" "Sala Consilina" "San Donato" "St Margherita" "Striano" "Strongoli" "Toschan" "Troina" "Vairano" "Amorosi" "Arce" "Arpino" "Barrea" "Bettola" "Borgia" "Boscoreale" "Brusciano" "Brusnengo" "Calatafini" "Canicatti" "Cardito" "Casapulla" "Castel Di Sangro" "Castelfrentano" "Castelli" "Castelmorrone" "Caulonia" "Cento" "Cesa" "Cicily" "Cimina" "Compiano" "Corigliano" "Corleto" "Cuggiono" "Cusano" "Falcone" "Fermini" "Flumeri" "Foglizzo" "Forno" "Geraci Siculo" "Grosseto" "Lapio" "Leonforte" "Livorno" "Molinella" "Montalto" "N Italy" "Pisticci" "Pomigliano" "Pontremoli" "Rapone" "Rosarno" "Rutino" "S Costantino" "S Cristina" "S Mango" "S Vincenzo" "Sannicandro" "Scisciano" "Settefrati" "Summonte" "Trevico" "Triggiano" "Varazze" "Vergato" "Vico Garganico" "Villa S Giovanni" "Acquasanta" "Aidone" "Aliano" "Anagni" "Augusto" "Bancino" "Berceto" "Bisaquino" "Calatabiano" "Cantalupo" "Capriglia" "Casola" "Casteltermini" "Catanjaro" "Cattolica" "Cefalie" "Cercepiccola" "Cerisano" "Cerzeto" "Cicagna" "Contrada" "Cupello" "Duronia" "Ferentino" "Gesualdo" "Gioiosa" "Grottaminarda" "Grumo" "Laureana" "Lizzano" "Mirto" "Modica" "Montemarano" "Monticelli" "Montorio" "Morreale" "Neirone" "Nocera Inf" "Noto" "Padova" "Paglieta" "Paola" "Pastorano" "Pomarico" "Raiano" "Ripi" "Roccalumera" "S Arcangelo" "S Demetrio" "S Donato N" "S Nicandro" "Salerni" "Scofati" "Seiacca" "Soverato" "Spezzano" "Torre Del Greco" "Turin" "Valva" "Vittoria" "Corleone" "S Stefano" "S Agata" "S Margherita" "S Fele" "S Flavia" "S Cataldo" "S Ninfa" "S Angelo" "S Fratello" "S Donato" "S Giovanni" "S Caterina" "S Salvatore" "S Valentino" "S Pietro" "S Guiseppe" "S Martino" "S Egidio" "S Giuseppe" "Cerda" "Marineo" "Lercara" "Bagheria" "Campagna" "Menfi" "Avigliano" "Roman" "Sarno" "Ribera" "Trabia" "Cefalu" "Caccamo" "Lipari" "Valledolmo" "Sambuca" "Alcamo" "Vinchiaturo" "Camporeale" "Polizzi" "Castelvetrano" "Terrasini" "Toritto" "Melfi" "Partanna" "Marsala" "Marigliano" "Vicari" "Castellammare" "Gagliano" "Maddaloni" "Amalfi" "Padula" "Cervinara" "Caiazzo" "Riccia" "Sassano" "Scafati" "Alimena" "Collesano" "Minturno" "Ventimiglia" "Teora" "Montella" "Bisacquino" "Massa" "Atripalda" "Vallelunga" "Gerace" "Afragola" "Ariano" "Melilli" "Misilmeri" "Serradifalco" "Vico Equense" "Agerola" "Borgetto" "Castelbuono" "Milazzo" "Positano" "Teano" "Bolognetta" "Decollatura" "Serino" "Carini" "Saviano" "Stigliano" "Partinico" "Scilla" "Montemaggiore" "Pagani" "Acerra" "Andretta" "Venafro" "Angri" "Craco" "Eboli" "Montedoro" "Rionero" "Vasto" "Buccino" "Faeto" "Castiglione" "Nocera" "Capua" "Collelongo" "Gragnano" "Morcone" "Castellamare" "Agnone" "Bovino" "Castrofilippo" "Bivona" "Muro Lucano" "Sulmona" "Pontelandolfo" "Tegiano" "Biccari" "Ciminna" "Greci" "Mistretta" "Sanfele" "Carovilli" "Petralia" "Calitri" "Castelfranco" "Grotte" "Pettorano" "Regalbuto" "Atrani" "Caltabellotta" "Castroreale" "Ragusa" "Marianopoli" "Montecorvino" "Burgio" "Aversa" "Calabritto" "Faicchio" "Frosolone" "Sciara" "Sorrento" "Amantea" "Baucina" "Bellona" "Caposele" "Prizzi" "Agira" "Fisciano" "Casoli" "Salandra" "Troia" "Verbicaro" "Calatafimi" "Gallico" "Monreale" "Montalbano" "Poggiomarino" "Ricigliano" "Accettura" "Airola" "Alberona" "Alfedena" "Fanano" "Fornelli" "Giarre" "Maschito" "Monteforte" "Panni" "Rogliano" "Apice" "Gasperina" "Montevago" "Popoli" "Senigallia" "Spadafora" "Cassano" "Cimitile" "Ferrara" "Godrano" "Lanciano" "Nusco" "Palo Del Colle" "Resuttano" "Avella" "Boiano" "Castelvetere" "Giuliana" "Laurenzana" "Marzano" "Pachino" "Palmi" "Pollica" "Rende" "Ruoti" "Stella Cilento" "Villafranca" "Capestrano" "Cianciana" "Fano" "San Fele" "Villafrati" "Aprigliano" "Capaccio" "Carleone" "Carolei" "Celano" "Montese" "Picerno" "Saponara" "Solofra" "Veroli" "Alatri" "Anzi" "Barga" "Boscotrecase" "Casabona" "Centola" "Ferrandina" "Mussomeli" "Procida" "Sturno" "Ateleta" "Baiano" "Balvano" "Bitonto" "Domanico" "Moliterno" "Oliveto" "Orsara" "Platania" "Polermo" "Racalmuto" "Reggio Calabria" "Sciacca" "Termini" "'
+foreach town of local Italy {
+	quietly replace origin_country = "Italy" if (origin_country == "`town'")
+}
+
+local Jamaica `" "Kingston" "'
+foreach town of local Jamaica {
+	quietly replace origin_country = "Jamaica" if (origin_country == "`town'")
+}
+
+local Jamaica `" " Kingston, Jamaica, W. I." " Devon, Jamaica, W. I." " Port Antonio, Jamaica, W. I." " Runaway Bay, Jamaica, W Ind" " Kingston, Jamaica , W. Ind." " Kingston, Ja., W. Ind." " Kingston, W. Ind." "'
+foreach town of local Jamaica {
+	replace origin_country = "Jamaica" if (origin == "`town'")
+}
+
+local Latvia `" "Dwinsk" "Libau" "Mitau" "'
+foreach town of local Latvia {
+	quietly replace origin_country = "Latvia" if (origin_country == "`town'")
+}
+
+local Lebanon `" "Beyrout" "Bayrouth" "Beyrourh" "Beyronth" "Beyrsuth" "Beyrut" "Beyrouth" "'
+foreach town of local Lebanon {
+	quietly replace origin_country = "Lebanon" if (origin_country == "`town'")
+}
+
+local Libya `" "Tripoli" "'
+foreach town of local Libya {
+	quietly replace origin_country = "Libya" if (origin_country == "`town'")
+}
+
+local Lithuania `" "Vilna" "Olita" "Kowna" "Tauroggen" "Galina" "Mariampol" "Schaulen" "Laibach" "Kovno" "'
+foreach town of local Lithuania {
+	quietly replace origin_country = "Lithuania" if (origin_country == "`town'")
+}
+
+local Luxembourg `" "Luxemb" "'
+foreach town of local Luxembourg {
+	quietly replace origin_country = "Luxembourg" if (origin_country == "`town'")
+}
+
+local Mexico `" "Vera Cruz" "Merida" "Mexico City" "'
+foreach town of local Mexico {
+	quietly replace origin_country = "Mexico" if (origin_country == "`town'")
+}
+
+local Moldova `" "Soroki" "Kischinef" "Kischinew" "Glucksthal" "Cania" "'
+foreach town of local Moldova {
+	quietly replace origin_country = "Moldova" if (origin_country == "`town'")
+}
+
+local Montenegro `" "Montenegrin" "Niksic" "Bar" "'
+foreach town of local Montenegro {
+	quietly replace origin_country = "Montenegro" if (origin_country == "`town'")
+}
+
+local Morocco `" "Galaz" "'
+foreach town of local Morocco {
+	quietly replace origin_country = "Morocco" if (origin_country == "`town'")
+}
+
+local Netherlands `" "Haarlem" "Beerta" "Krabbendyke" "Holand" "Middelburg" "Utrecht" "Apeldoorn" "Ede" "Ulrum" "Bolsward" "Groede" "Wolvega" "Elburg" "Nes" "Oostwold" "Winschoten" "Delft" "Goes" "Harlinger" "Helder" "N Beerta" "Ouddorp" "Almelo" "Uden" "Groningen" "Amsterdam" "The Hague" "Rotterdam" "'
+foreach town of local Netherlands {
+	quietly replace origin_country = "Netherlands" if (origin_country == "`town'")
+}
+
+local NewZealand `" "Queenstown" "'
+foreach town of local NewZealand {
+	quietly replace origin_country = "New Zealand" if (origin_country == "`town'")
+}
+
+local NorthernIreland `" "Down" "Armagh" "Derry" "Antrim" "Belfast" "Fermanagh" "Ballinaloob" "Londonderry" "'
+foreach town of local NorthernIreland {
+	quietly replace origin_country = "Northern Ireland" if (origin_country == "`town'")
+}
+
+local Norway `" "Fredriksstad" "Moss" "Sandefjord" "Gjovik" "Fredrikstad" "Aalesund" "Kragero" "Telemarken" "Eidsberg" "Flekkefjord" "Hadeland" "Stavange" "Elverum" "Hangesund" "Horten" "Oksnes" "Biri" "Drobak" "Risor" "Lillesand" "Tonsberg" "Drontheim" "Trondhjem" "Grimstad" "Larvik" "Farsund" "Mandal" "Kristiansund" "Drammen" "Skien" "Throndhjem" "Christiansand" "Kristiania" "Bergen" "Stavanger" "Arendal" "'
+foreach town of local Norway {
+	quietly replace origin_country = "Norway" if (origin_country == "`town'")
+}
+
+local Panama `" "Colon" "'
+foreach town of local Panama {
+	quietly replace origin_country = "Panama" if (origin_country == "`town'")
+}
+
+local Poland `" "Kozlow" "Ostrow" "Konin" "Bielostok" "Gnesen" "Gorlice" "Jaslo" "Mielec" "Ostrowo" "Bielsk" "Janowo" "Polish" "Czernigow" "Sanok" "Krakow" "Lipno" "Radom" "Ulanow" "Brzozow" "Dabrowa" "Plotzk" "Polanka" "Przemysl" "Dukla" "Suwolk" "Bobrka" "Dembica" "Dombrowo" "Gron" "Kolno" "Tarnobrzeg" "Janowitz" "Kolbuszow" "Kolbuszowa" "Serby" "Sokolow" "Gliniany" "Godowa" "Kotowka" "Laszki" "Nowogrod" "Ostrolenka" "Przemyol" "Salino" "Sieniawa" "Stettin" "Mlawa" "Bialystock" "Tarnow" "Krakau" "Lublin" "Suwalki" "Lodz" "Bialystok" "Warsaw" "Warschaw" "Warshaw" "Warshau" "Warschan" "'
+foreach town of local Poland {
+	quietly replace origin_country = "Poland" if (origin_country == "`town'")
+}
+
+local Portugal `" "Alvito" "Fayal" "Funchal" "'
+foreach town of local Portugal {
+	quietly replace origin_country = "Portugal" if (origin_country == "`town'")
+}
+
+local Prussia `" "Posen" "'
+foreach town of local Prussia {
+	quietly replace origin_country = "Prussia" if (origin_country == "`town'")
+}
+
+local PuertoRico `" "San Juan" "Porto Rico" "Pto Rico" "'
+foreach town of local PuertoRico {
+	quietly replace origin_country = "Puerto Rico" if (origin_country == "`town'")
+}
+
+local Romania `" "Galati" "Bucharest" "Piatra" "Dorohoi" "Arad" "Roamania" "Craova" "Iassy" "Rumanian" "Focsani" "Bukarest" "Bacau" "Botosani" "Galatz" "Berlad" "Braila" "Jassy" "Bucarest" "'
+foreach town of local Romania {
+	quietly replace origin_country = "Romania" if (origin_country == "`town'")
+}
+
+local Russia `" "Yassy" "Podolsk" "Rusjia" "Saratov" "Alexandrow" "Severin" "Jekaterinoslaw" "Ekaterinoslaw" "Rssia" "Rusfia" "'
+foreach town of local Russia {
+	quietly replace origin_country = "Russia" if (origin_country == "`town'")
+}
+
+local Scotland `" "Shotts" "Dunfermline" "Baillieston" "Kilsyth" "Govan" "Stevenston" "Arbroath" "Rutherglen" "Elderslie" "Ggow" "Wishaw" "Kilmarnock" "Bellshill" "Edinbro" "Larkhall" "Greenock" "Edinburgh" "Paisley" "Aberdeen" "Dundee" "Birmingham" "Sheffield" "Morrone" "Cambuslang" "Carfin" "Dalry" "Ayr" "Craigneuk" "Inverness" "Kirkcaldy" "Stewarton" "Uddingston" "Helensburgh" "Holytown" "Saltcoats" "Stranraer" "Bathgate" "Dumbarton" "Dunoon" "Fraserburgh" "Linlithgow" "Shettleston" "Tayport" "Forfar" "Gourock" "Kelty" "Springburn" "'
+foreach town of local Scotland {
+	quietly replace origin_country = "Scotland" if (origin_country == "`town'")
+}
+
+local Senegal `" "Sagata" "'
+foreach town of local Senegal {
+	quietly replace origin_country = "Senegal" if (origin_country == "`town'")
+}
+
+local Serbia `" "Ruma" "Apatin" "'
+foreach town of local Serbia {
+	quietly replace origin_country = "Serbia" if (origin_country == "`town'")
+}
+
+local Slovakia `" "Sciana" "Chotin" "Sloviaka" "Cslovakia" "Eperjes" "Locse" "Iglo" "Podolin" "'
+foreach town of local Slovakia {
+	quietly replace origin_country = "Slovakia" if (origin_country == "`town'")
+}
+
+local Slovenia `" "Lucia" "Pirce" "Gradno" "Laibach" "'
+foreach town of local Slovenia {
+	quietly replace origin_country = "Slovenia" if (origin_country == "`town'")
+}
+
+local SolomonIslands `" "Ulawa" "'
+foreach town of local SolomonIslands {
+	quietly replace origin_country = "Solomon Islands" if (origin_country == "`town'")
+}
+
+local SouthAfrica `" "Kurland" "Seafati" "Kowns" "Talsen" "'
+foreach town of local SouthAfrica {
+	quietly replace origin_country = "South Africa" if (origin_country == "`town'")
+}
+
+local Spain `" "Soria" "Palma Camp" "Guardia" "Guardia L" "Montoro" "Banzas" "Ceramo" "Malaga" "S Cipriano" "Canlonia" "Castello" "Madrid" "Galisia" "Palma" "Polla" "Barcellona" "'
+foreach town of local Spain {
+	quietly replace origin_country = "Spain" if (origin_country == "`town'")
+}
+
+local StateofPalestine `" "Palestinia" "Palestine" "'
+foreach town of local StateofPalestine {
+	quietly replace origin_country = "Palestinian Territories" if (origin_country == "`town'")
+}
+
+local Sudan `" "Leban" "'
+foreach town of local Sudan {
+	quietly replace origin_country = "Sudan" if (origin_country == "`town'")
+}
+
+local Suriname `" "Surinam" "'
+foreach town of local Suriname {
+	quietly replace origin_country = "Suriname" if (origin_country == "`town'")
+}
+
+local Sweden `" "Bergsjo" "Gefle" "Gottenburg" "Motala" "Ragunda" "Vermland" "Gotland" "Gottenberg" "Orebro" "Sunne" "Yathenburg" "Pitea" "Swedenn" "Vasa" "Arvika" "Lund" "Norrkoping" "Gothenberg" "Helsingborg" "Goteborg" "Malmo" "Gothenburg" "Stockholm" "Swedem" "'
+foreach town of local Sweden {
+	quietly replace origin_country = "Sweden" if (origin_country == "`town'")
+}
+
+local Switzerland `" "Corino" "Switserland" "Switzerld" "Coritto" "Sessa" "Rorbach" "Ebnat" "St Gallen" "Campo" "Adlisweil" "Biel" "Bern" "Castelgrande" "Berne" "Basel" "Campofelice" "Zurich" "Switzland" "'
+foreach town of local Switzerland {
+	quietly replace origin_country = "Switzerland" if (origin_country == "`town'")
+}
+
+local Syria `" "Aleppo" "Syria Ta" "Syria A" "Damascus" "'
+foreach town of local Syria {
+	quietly replace origin_country = "Syria" if (origin_country == "`town'")
+}
+
+local TheBahamas `" "Nassau" "'
+foreach town of local TheBahamas {
+	quietly replace origin_country = "The Bahamas" if (origin_country == "`town'")
+}
+
+local TheBahamas `" " Nassau, Bahamas, W. Ind." "'
+foreach town of local TheBahamas {
+	replace origin_country = "The Bahamas" if (origin == "`town'")
+}
+
+local TrinidadAndTobago `" "T'Dad" "'
+foreach town of local TrinidadAndTobago {
+	quietly replace origin_country = "Trinidad and Tobago" if (origin_country == "`town'")
+}
+
+local TrinidadAndTobago `" " Port of Spain, Trinidad, W. Ind." " Belmont, Trinidad, W. Ind." " Port of Spain, Trindad, W. Ind." " Port of Spain, W Ind." " Port of Spain, W. I." "'
+foreach town of local TrinidadAndTobago {
+	quietly replace origin_country = "Trinidad and Tobago" if (origin == "`town'")
+}
+
+local Tunisia `" "Tunis" "Monastir" "Tunisi" "Tunisie" "'
+foreach town of local Tunisia {
+	quietly replace origin_country = "Tunisia" if (origin_country == "`town'")
+}
+
+local Turkey `" "Alexandrette" "Bitlis" "Han" "Turchia" "Turkeuy" "Mersina" "Smyrne" "Samsoun" "Constantinople" "'
+foreach town of local Turkey {
+	quietly replace origin_country = "Turkey" if (origin_country == "`town'")
+}
+
+local Ukraine `" "Proskurow" "Husiatyn" "Rohatyn" "Uman" "Busk" "Podhajce" "Gorodok" "Ostrog" "Zitomir" "Fastow" "Horodenka" "Drohsbicz" "Kowel" "Tarutino" "Bilek" "Charkow" "Jezupol" "Klostitz" "Poltava" "Smela" "Ukrania" "Bolechow" "Boryslaw" "Rowne" "Sarata" "Bachmut" "Balta" "Sitomir" "Tschernembl" "Brzezany" "Buczacz" "Romny" "Skalat" "Smila" "Soroky" "Belz" "Sambor" "Stanislau" "Tarnopol" "Czernowitz" "Kieff" "Kolomea" "Brody" "Stryj" "Rowno" "Kiew" "Lemberg" "Riga" "Odessa" "'
+foreach town of local Ukraine {
+	quietly replace origin_country = "Ukraine" if (origin_country == "`town'")
+}
+
+local USA `" "Chicago" "Claims Us Born" "Irvine" "New York City" "Amerika" "U S Born" "Filadelfia" "N York" "Hawaii" "Neb" "New York Usa" "Ny City" "Philadelphia" "Us Citizen" "San Jose" "Puerto Rico" "Us Born" "USA" "U S Citizen" "Ct" "Va" "'
+foreach town of local USA {
+	quietly replace origin_country = "United States" if (origin_country == "`town'")
+}
+
+local Venezuela `" "Ven" "'
+foreach town of local Venezuela {
+	quietly replace origin_country = "Venezuela" if (origin_country == "`town'")
+}
+
+local Wales `" "Morriston" "Swansea" "Llanelly" "Cardiff" "Glamorgan" "S Wales" "Abertillery" "Port Talbot" "'
+foreach town of local Wales {
+	quietly replace origin_country = "Wales" if (origin_country == "`town'")
+}
+
+local WestIndies `" "W Indies" "'
+foreach town of local WestIndies {
+	quietly replace origin_country = "West Indies" if (origin_country == "`town'")
+}
+
 // Reassemble Yugoslavia - IS THIS APPROPRIATE??? - (SR Bosnia and Herzegovina, SR Croatia, SR Macedonia, SR Montenegro, SR Slovenia, and SR Serbia)
-replace origin_country = "Yugoslavia" if (origin_country == "Jugoslavia") ///
-	| (origin_country == "Yougoslavia") | (origin_country == "Jugosl") ///
-	| (origin_country == "Jugoslav") | (origin_country == "Yougosl") ///
-	| (origin_country == "Yugo-Slav") | (origin_country == "Jugo Slavia") ///
-	| (origin_country == "Jugo-Sl") | (origin_country == "Yugo-Sl") ///
-	| (origin_country == "Yugo Slavish") | (origin_country == "Jugoslv") ///
-	| (origin_country == "J Slav") | (origin_country == "Jougosl") ///
-	| (origin_country == "Yugoslav") | (origin_country == "Jugo Slav") ///
-	| (origin_country == "Yugosl") | (origin_country == "Yugo-Slavia") ///
-	| (origin_country == "Yugo Sl") | (origin_country == "Yugo-Slavia") 
-	
+local Yugoslavia `" "Jugo Slovakia" "J-Sl" "Yougo-Slav" "Yougoslav" "Yougo-Slavia" "Jugo-Slavia" "Y Slavia" "Yugo Slav" "Yougo-Sl" "Yugo Slavia" "Y Slav" "Jugo-Slav" "Bosnia" "Yugoslavia" "Jugoslavia" "Yougoslavia" "Jugosl" "Jugoslav" "Yougosl" "Yugo-Slav" "Jugo Slavia" "Jugo-Sl" "Yugo-Sl" "Yugo Slavish" "Jugoslv" "J Slav" "Jougosl" "Yugoslav" "Jugo Slav" "Yugosl" "Yugo-Slavia" "Yugo Sl" "Yugo-Slavia" "Y Slove" "Y-Slavia" "Yougo Slovaky" "Tcheco-Slovac" "'
+foreach town of local Yugoslavia {
+	quietly replace origin_country = "Yugoslavia" if (origin_country == "`town'")
+}
+
+local COMEBACKTOME  `" "Maryhill" "South America" "West Ind" "Frank" "Kulm" "Samsonn" "Alva" "Ansonia" "M" "Pyrus" "Bacan" "Mora" "Christiana" "Dabar" "Gallina" "Johnston" "Oe" "Selz" "Asia" "Mir" "S Fili" "St George" "Staranger" "Vita" "Kalish" "So A" "Sw" "Aleamo" "Burnbank" "Galston" "Gr" "Hungar" "Mitan" "Rosenberg" "Stella" "W" "Gilly" "Grodns" "Newton" "Stmichaels" "Willington" "Campagua" "L" "Naro" "Rp" "Turky A" "Baghena" "C Am" "Gallo" "Ha" "Jersey" "Korono" "Montebello" "Newport" "S Am" "Turk A" "Archipelago" "Basso" "Bla" "By" "Foggio" "Ia" "Kovna" "Leeland" "S America" "S Land" "Wilma" "Cava" "Kolb" "Luna" "O Asia" "Osch" "Pico" "Riva" "Alessand" "Archipelagos" "Austria Hungary" "Bangor" "Bel" "Borisow" "Francais" "Fredriksen" "Hastings" "Holden" "Jam" "Kadam" "Keiw" "Melissa" "Middlesboro" "Novi" "Rada" "Renan" "Rouse" "S Asia" "Smirne" "St Tuna" "T E" "Trenta" "Vehdrtz" "Vietri" "Al" "Armadale" "B'Da" "Canamo" "D W I" "Douglas" "Freestate Of Danzig" "H" "Halbstadt" "Harwood" "Isola" "Koretz" "Kronenthal" "Montrone" "Motta" "P" "Petersburg" "Ruda" "Ser" "St Johns" "Tocsani" "Trone" "Ponewesh" "Terseke" "Elisabethgrad" "Kischenew" "Ottaiano" "Caltanis" "Cotenza" "Erapani" "Schoondyke" "Ceora" "Crapani" "Czerkas" "Ferenini" "Harpoot" "Kenouria" "Trebizonde" "C Amer" "La" "Piracus" "Sercara" "Borislaw" "Jessy" "S Angelo Lomb" "Sciacea" "Calliano" "Elisawetgrad" "Jawidcze" "Serbs Croats & Slovenes" "Tavricien" "Trifail" "Wilkomir" "Jekaterinaslaw" "Marsiconnovo" "S Giuseppe Tato" "Sarotow" "Tenanni" "Tennini" "Tripolitza" "Wastirsi" "Witkowitz" "Christiansund" "Ekaterinaslaw" "Frabia" "Kamenitz" "Kischeneff" "Krainburg" "Porsgrund" "Resicza" "Solmona" "Begrouth" "Beresin" "Bessarab" "Boriphan" "Braumlueig" "Delianova" "Elizabethgrad" "Friutrop" "Fwi" "Glogon" "Goyeo" "Minsh" "Oliveto Citro" "Osick" "Wasilesky" "Zigmarz" "Bialostok" "Boslaw" "Capna" "Capriati Volt" "Cegiano" "Coritza" "Lomsa" "Muro Luc" "Niksich" "Palerino" "S Lupo" "Shaptza" "Smilowitz" "Neudorf" "St Helens" "Mirabella" "Blantyre" "Damas" "Csl" "Canna" "Tarsia" "Roseto" "Paterno" "Monaghan" "Makow" "Havre" "Leith" "Kassa" "Rose" "Potenzo" "Monteleone" "Kandel" "Dolina" "Slov" "Rodi" "Harlingen" "Bukowina" "Valledolino" "A'Dam" "Maida" "Lens" "Sealand" "Pirie" "Prata" "Dudley" "Parenti" "Pol" "Laurenzano" "Lago" "Contessa" "Tusa" "Suwalky" "Jossy" "Pos" "South" "Austr" "B" "Cermini" "Villalba" "Salina" "West Indies" "Elena" "Chrsand" "Meta" "Stanislaw" "Sora" "Speier" "Augusta" "Nola" "Johnstone" "Bancina" "T A" "Alife" "Naso" "Norka" "Sa" "R" "A" "S" "C" "Ta" "U" "Bella" "Campobello" "Alia" "Acri" "Villarosa" "Patti" "Altavilla" "Tyrone" "Nicastro" "So America" "Non Immigrant Alien" "Prussia" "Persia" "Africa" "Wi" "S Amer" "S A" "Wolyn" "Hamilton" "So Amer" "Belmonte" "Rus" "So Am" "S H S" "Russ" "Jutland" "Lesser Antilles" "W I" "W Ind" "'
+foreach town of local COMEBACKTOME {
+	quietly replace origin_country = "COMEBACKTOME" if (origin_country == "`town'")
+}
+
+
+
+
+
+////////////////////
+
+// Create a flag indicating whether the origin_country is a modern country
+// Initial list is from http://m.state.gov/mc17517.htm, but with United States added, and some formatting ', ,, - removed. After that there are a few countries that were added (see the final line of the macro) because they are reasonable as historical countries
+// drop is_country_flag
+gen is_country_flag = .
+local list_of_countries `" "Afghanistan" "Albania" "Algeria" "Andorra" "Angola" "Antigua and Barbuda" "Argentina" "Armenia" "Aruba" "Australia" "Austria" "Azerbaijan" "Bahamas" "Bahrain" "Bangladesh" "Barbados" "Belarus" "Belgium" "Belize" "Benin" "Bhutan" "Bolivia" "'
+local list_of_countries `" `list_of_countries' "Bosnia and Herzegovina" "Botswana" "Brazil" "Brunei" "Bulgaria" "Burkina Faso" "Burma" "Burundi" "Cambodia" "Cameroon" "Canada" "Cabo Verde" "Central African Republic" "Chad" "Chile" "China" "Colombia" "Comoros" "Congo" "Congo" "Costa Rica"  "'
+local list_of_countries `" `list_of_countries' "Cote d Ivoire" "Croatia" "Cuba" "Curacao" "Cyprus" "Czech Republic" "Denmark" "Djibouti" "Dominica" "Dominican Republic" "Ecuador" "Egypt" "El Salvador" "Equatorial Guinea" "Eritrea" "Estonia" "Ethiopia" "Fiji" "Finland" "France" "Gabon" "Gambia" "'
+local list_of_countries `" `list_of_countries' "Georgia" "Germany" "Ghana" "Greece" "Grenada" "Guatemala" "Guinea" "Guinea Bissau" "Guyana" "Haiti" "Holy See" "Honduras" "Hong Kong" "Hungary" "Iceland" "India" "Indonesia" "Iran" "Iraq" "Ireland" "Israel" "Italy" "Jamaica" "Japan" "Jordan" "Kazakhstan" "'
+local list_of_countries `" `list_of_countries' "Kenya" "Kiribati" "Noth Korea" "South Korea" "Kosovo" "Kuwait" "Kyrgyzstan" "Laos" "Latvia" "Lebanon" "Lesotho" "Liberia" "Libya" "Liechtenstein" "Lithuania" "Luxembourg" "Macau" "Macedonia" "Madagascar" "Malawi" "Malaysia" "Maldives" "Mali" "Malta" "'
+local list_of_countries `" `list_of_countries' "Marshall Islands" "Mauritania" "Mauritius" "Mexico" "Micronesia" "Moldova" "Monaco" "Mongolia" "Montenegro" "Morocco" "Mozambique" "Namibia" "Nauru" "Nepal" "Netherlands" "Netherlands Antilles" "New Zealand" "Nicaragua" "Niger" "Nigeria" "North Korea" "'
+local list_of_countries `" `list_of_countries' "Norway" "Oman" "Pakistan" "Palau" "Palestinian Territories" "Panama" "Papua New Guinea" "Paraguay" "Peru" "Philippines" "Poland" "Portugal" "Qatar" "Romania" "Russia" "Rwanda" "Saint Kitts and Nevis" "Saint Lucia" "Saint Vincent and the Grenadines" "Samoa" "'
+local list_of_countries `" `list_of_countries' "San Marino" "Sao Tome and Principe" "Saudi Arabia" "Senegal" "Serbia" "Seychelles" "Sierra Leone" "Singapore" "Sint Maarten" "Slovakia" "Slovenia" "Solomon Islands" "Somalia" "South Africa" "South Korea" "South Sudan" "Spain" "Sri Lanka" "Sudan" "Suriname" "'
+local list_of_countries `" `list_of_countries' "Swaziland" "Sweden" "Switzerland" "Syria" "Taiwan" "Tajikistan" "Tanzania" "Thailand" "Timor Leste" "Togo" "Tonga" "Trinidad and Tobago" "Tunisia" "Turkey" "Turkmenistan" "Tuvalu" "Uganda" "Ukraine" "United Arab Emirates" "United Kingdom" "Uruguay" "Uzbekistan" "Vanuatu" "Venezuela" "Vietnam" "Yemen" "Zambia" "Zimbabwe" "'
+local list_of_countries `" `list_of_countries' "United States" "Galicia" "'
+
+// display `"`list_of_countries'"'
+// Iterate through the list of countries and add a flag if it's not a country.  
+foreach country of local list_of_countries {
+	quietly replace is_country_flag = 1 if (origin_country == "`country'") 
+}
+
+
+// Create a flag indicating whether the origin_country is a reasonable country for the purposes of for now
+// drop is_reasonable_flag
+gen is_reasonable_flag = .
+local list_of_reasonable `" "England" "Wales" "Scotland" "Yugoslavia" "Bermuda" "Czechoslovakia" "The Bahamas" "Lebanon" "Ukraine" "Northern Ireland" "British Guiana" "'
+
+// display `"`list_of_countries'"'
+// Iterate through the list of countries and add a flag if it's not a country.  
+foreach country of local list_of_reasonable {
+	quietly replace is_reasonable_flag = 1 if (origin_country == "`country'") 
+}
+
+
+// Use this to list the countries that need to be looked at
+// drop country_frequency
+egen country_frequency = count(1), by(origin_country)
+gsort -country_frequency origin_country
+
+// Get a list of rows to clean
+tab origin_country if country_frequency > 10 & !missing(country_frequency) & missing(is_country_flag) & missing(is_reasonable_flag), sort
+
+// Look at these next:
+// Go through the COMEBACKTOME countries
+
+
+
+// Use this to look at the country of interest (replace HERE with the country):
+local LookingAt `" "W I" "'
+foreach country of local LookingAt {
+	tab origin if origin_country == "`country'", sort
+	tab origin_city if origin_country == "`country'", sort
+	tab ethnicity if origin_country == "`country'"
+}
+
+
+
+// Get a count of the total number of rows that are reasonable
+tab origin_country if !missing(is_country_flag) | !missing(is_reasonable_flag)
+
+
+//////////////////// DECISIONS
 // Should we reassemble Great Britain or better separated?	
 // Not sure what to do with Russ vs Rus	
 // Need to separate the different countries caught up in So Am and So Amer
 // Have left Prussia as a country, not sure if want to integrate into Germany or leave separate
-// Come back to: Curland, Austr, Pos, Massa, Pol, Styria, Ta, Rssia, Rusfia, Csl, T A, Ekaterinoslaw, GR, Istria, Slov, A, Archipelago, Archipelagos, Va, Austria Hungary, B'Da
+// Come back to: Curland, Austr, Pos, Massa, Pol, Styria, Ta, Rssia, Rusfia, Csl, T A, Ekaterinoslaw, GR, Istria, Slov, A, Archipelago, Archipelagos, Austria Hungary, B'Da
 // W I is West Indies, but need to look at where to put them
 // Bukowina is split between Romania and Ukraine these days - not sure how to deal with that
-
-// Use this to list the countries that need to be looked at
-// 
-egen x = count(1), by(origin_country)
-gsort -x origin_country
-
-tab origin_country if x > 25 & x < 61 & !missing(x) & missing(is_country_flag), sort
-tab origin_city if origin_country == "Paris"
-
-
-
-
-////////UP TO HERE - CLEAN THESE ONES NEXT
-tab origin if (origin_country == "Glasgow"), sort
-
-                                 Beyrouth |      1,981        3.02       54.93
-                                Glasgow |      1,033        1.57       60.83
-                                 Odessa |        771        1.17       62.01
-                                Bermuda |        679        1.03       63.04
-                              Liverpool |        592        0.90       63.94
-                                Sciacca |        572        0.87       64.81
-                                  Paris |        558        0.85       65.66
-                                 Havana |        529        0.81       66.47
-                            Christiania |        509        0.78       67.24
-                                  Jassy |        508        0.77       68.02
-                               Bucarest |        437        0.67       68.68
-                              Rotterdam |        404        0.62       69.30
-                                  Hango |        395        0.60       69.90
-                             Gothenburg |        394        0.60       70.50
-                                 Bergen |        390        0.59       71.09
-                                Termini |        359        0.55       71.64
-                                Belfast |        347        0.53       72.17
-                                  So Am |        342        0.52       72.69
-                             Copenhagen |        335        0.51       73.20
-                                   Kiew |        330        0.50       73.70
-                                  S H S |        317        0.48       74.19
-                                  Libau |        296        0.45       74.64
-                             Manchester |        290        0.44       75.08
-                                   Russ |        272        0.41       75.49
-                                  Piree |        250        0.38       75.87
-                                Jutland |        243        0.37       76.24
-                                   Lodz |        218        0.33       76.58
-                              Stavanger |        213        0.32       76.90
-                               Corleone |        195        0.30       77.20
-                                     Wi |        186        0.28       77.48
-                                Tripoli |        183        0.28       77.76
-                                 Sparta |        181        0.28       78.03
-                              S Stefano |        178        0.27       78.31
-                                  Cerda |        177        0.27       78.58
-                                 Dundee |        175        0.27       78.84
-                                S Agata |        172        0.26       79.10
-                                 Berlin |        165        0.25       79.36
-                                Lemberg |        164        0.25       79.61
-                                Marineo |        163        0.25       79.85
-                                 Galatz |        158        0.24       80.09
-                                Antwerp |        157        0.24       80.33
-                                  Wolyn |        156        0.24       80.57
-                             Birmingham |        155        0.24       80.81
-                              Palestine |        153        0.23       81.04
-                               Hamilton |        150        0.23       81.27
-                                Lercara |        144        0.22       81.49
-                               Bagheria |        142        0.22       81.70
-                              Bialystok |        142        0.22       81.92
-                               Campagna |        141        0.21       82.14
-                                 Dublin |        141        0.21       82.35
-                                So Amer |        141        0.21       82.56
-                                  Leeds |        140        0.21       82.78
-                              Stockholm |        138        0.21       82.99
-                                Donegal |        137        0.21       83.20
-                                  Menfi |        134        0.20       83.40
-                             Marseilles |        133        0.20       83.60
-                              Amsterdam |        132        0.20       83.80
-                              Edinburgh |        131        0.20       84.00
-                              Sao Paulo |        129        0.20       84.20
-                                  Fayal |        128        0.19       84.40
-                           S Margherita |        128        0.19       84.59
-                              Avigliano |        125        0.19       84.78
-                               Belmonte |        124        0.19       84.97
-                                Paisley |        124        0.19       85.16
-                                Nicosia |        123        0.19       85.35
-                                Hamburg |        122        0.19       85.53
-                               Nicastro |        122        0.19       85.72
-                                  Roman |        121        0.18       85.90
-                                  Sarno |        121        0.18       86.09
-                                 Africa |        120        0.18       86.27
-                                 Ribera |        120        0.18       86.45
-                                 Trabia |        119        0.18       86.63
-                                 Cefalu |        117        0.18       86.81
-                                Arendal |        116        0.18       86.99
-                                  Derry |        116        0.18       87.16
-                                Caccamo |        115        0.18       87.34
-                                 Lipari |        115        0.18       87.51
-                             Valledolmo |        114        0.17       87.69
-                                Sambuca |        113        0.17       87.86
-                                 Antrim |        112        0.17       88.03
-                                 Persia |        108        0.16       88.20
-                              Sheffield |        106        0.16       88.36
-                               Aberdeen |        103        0.16       88.51
-                                Suwalki |        102        0.16       88.67
-                               Budapest |        101        0.15       88.82
-                                 Tyrone |        101        0.15       88.98
-                                 Warsaw |        101        0.15       89.13
-                                 Alcamo |         99        0.15       89.28
-                              Altavilla |         99        0.15       89.43
-                                  Patti |         99        0.15       89.58
-                                   Riga |         99        0.15       89.73
-                             Kristiania |         98        0.15       89.88
-                              Villarosa |         98        0.15       90.03
-                                 S Fele |         97        0.15       90.18
-                                   Wien |         94        0.14       90.32
-                               S Flavia |         93        0.14       90.47
-                                    W I |         93        0.14       90.61
-                                   Acri |         92        0.14       90.75
-                             Camporeale |         92        0.14       90.89
-                                 Berlad |         91        0.14       91.03
-                                  Malmo |         91        0.14       91.16
-                                Polizzi |         91        0.14       91.30
-                                 Braila |         90        0.14       91.44
-                                  W Ind |         90        0.14       91.58
-                           Buenos Aires |         89        0.14       91.71
-                          Castelvetrano |         89        0.14       91.85
-                              Terrasini |         89        0.14       91.98
-                                   Alia |         86        0.13       92.11
-                               Greenock |         86        0.13       92.25
-                                Toritto |         86        0.13       92.38
-                             Campobello |         85        0.13       92.51
-                               Kingston |         85        0.13       92.64
-                               Larkhall |         85        0.13       92.77
-                                  Melfi |         85        0.13       92.89
-                               Partanna |         85        0.13       93.02
-                                Marsala |         84        0.13       93.15
-                                  Xania |         83        0.13       93.28
-                               Cornwall |         82        0.12       93.40
-                             Marigliano |         82        0.12       93.53
-                                 Vicari |         82        0.12       93.65
-                                Piraeus |         81        0.12       93.78
-                                    Rus |         81        0.12       93.90
-                                  Bella |         80        0.12       94.02
-                              S Cataldo |         80        0.12       94.14
-                               Warschaw |         80        0.12       94.27
-                                 Zurich |         80        0.12       94.39
-                                S Paulo |         79        0.12       94.51
-                                     Ta |         79        0.12       94.63
-                          Castellammare |         78        0.12       94.75
-                               Gagliano |         78        0.12       94.87
-                                 Armagh |         77        0.12       94.98
-                              Maddaloni |         77        0.12       95.10
-                                  Pireo |         77        0.12       95.22
-                                  Rowno |         77        0.12       95.33
-                                 Amalfi |         76        0.12       95.45
-                              Groningen |         76        0.12       95.57
-                                 Padula |         76        0.12       95.68
-                              Cervinara |         74        0.11       95.79
-                                      U |         74        0.11       95.91
-                               Blantyre |         73        0.11       96.02
-                                Caiazzo |         73        0.11       96.13
-                                   Prag |         72        0.11       96.24
-                                 Riccia |         71        0.11       96.35
-                              Marseille |         70        0.11       96.45
-                                Sassano |         70        0.11       96.56
-                                Scafati |         70        0.11       96.67
-                                Alimena |         69        0.11       96.77
-                          Christiansand |         69        0.11       96.88
-                                 Vienna |         69        0.11       96.98
-                               Bradford |         68        0.10       97.09
-                              Collesano |         68        0.10       97.19
-                               Minturno |         68        0.10       97.29
-                                Prussia |         68        0.10       97.40
-                            Ventimiglia |         68        0.10       97.50
-                            Campofelice |         67        0.10       97.60
-                                  Teora |         67        0.10       97.70
-                                 Bremen |         66        0.10       97.81
-                                 Lublin |         66        0.10       97.91
-                               Montella |         66        0.10       98.01
-                    Non Immigrant Alien |         66        0.10       98.11
-                             Bisacquino |         65        0.10       98.21
-                                  Massa |         65        0.10       98.30
-                              Atripalda |         64        0.10       98.40
-                                Cardiff |         63        0.10       98.50
-                                S Ninfa |         63        0.10       98.59
-                             Vallelunga |         63        0.10       98.69
-                                  Brest |         62        0.09       98.78
-                                 Gerace |         62        0.09       98.88
-                                 Lievin |         62        0.09       98.97
-                                  Norka |         62        0.09       99.07
-                               S Angelo |         62        0.09       99.16
-                                Samsoun |         62        0.09       99.26
-                               Afragola |         61        0.09       99.35
-                                 Ariano |         61        0.09       99.44
-                                Melilli |         61        0.09       99.54
-                              Misilmeri |         61        0.09       99.63
-                             Motherwell |         61        0.09       99.72
-                                   Naso |         61        0.09       99.81
-                           Serradifalco |         61        0.09       99.91
-                           Vico Equense |         61        0.09      100.00
-                                Agerola |         60        0.42        0.42
-                               Borgetto |         60        0.42        0.84
-                            Castelbuono |         60        0.42        1.26
-                                Milazzo |         60        0.42        1.69
-                               Positano |         60        0.42        2.11
-                                  Teano |         60        0.42        2.53
-                                  Alife |         59        0.41        2.94
-                             Bolognetta |         59        0.41        3.36
-                            Decollatura |         59        0.41        3.77
-                          Ekaterinoslaw |         59        0.41        4.19
-                                 Serino |         59        0.41        4.60
-                            Southampton |         59        0.41        5.01
-                               Llanelly |         58        0.41        5.42
-                                    T A |         58        0.41        5.83
-                                Bancina |         57        0.40        6.23
-                               Besseges |         57        0.40        6.63
-                                 Carini |         57        0.40        7.03
-                                 Dwinsk |         57        0.40        7.43
-                                Saviano |         57        0.40        7.83
-                              Stigliano |         57        0.40        8.23
-                              Partinico |         56        0.39        8.62
-                            Puerto Rico |         56        0.39        9.02
-                                 Scilla |         56        0.39        9.41
-                                Bristol |         55        0.39        9.80
-                              Johnstone |         55        0.39       10.18
-                          Montemaggiore |         55        0.39       10.57
-                                 Pagani |         55        0.39       10.95
-                                 Acerra |         54        0.38       11.33
-                               Andretta |         54        0.38       11.71
-                                   Nola |         54        0.38       12.09
-                                Airdrie |         53        0.37       12.46
-                                Augusta |         53        0.37       12.84
-                         Constantinople |         53        0.37       13.21
-                                Edinbro |         53        0.37       13.58
-                                Neudorf |         53        0.37       13.95
-                             Nottingham |         53        0.37       14.32
-                              Stanislaw |         53        0.37       14.70
-                                Venafro |         53        0.37       15.07
-                               Warschan |         53        0.37       15.44
-                                  Angri |         52        0.37       15.81
-                             Barcellona |         52        0.37       16.17
-                                  Craco |         52        0.37       16.54
-                                  Eboli |         52        0.37       16.90
-                                   Meta |         52        0.37       17.27
-                              Montedoro |         52        0.37       17.63
-                                Rionero |         52        0.37       18.00
-                             S Fratello |         52        0.37       18.36
-                                  Vasto |         52        0.37       18.73
-                                  Brody |         51        0.36       19.09
-                                Buccino |         51        0.36       19.44
-                                  Faeto |         51        0.36       19.80
-                                  Jaffa |         51        0.36       20.16
-                                 Krakau |         51        0.36       20.52
-                               Tripolis |         51        0.36       20.88
-                            Castiglione |         50        0.35       21.23
-                                Chrsand |         50        0.35       21.58
-                                  Elena |         50        0.35       21.93
-                                  Jumet |         50        0.35       22.28
-                                 Nocera |         50        0.35       22.63
-                                  Cania |         49        0.34       22.98
-                                  Capua |         49        0.34       23.32
-                             Collelongo |         49        0.34       23.66
-                                   Down |         49        0.34       24.01
-                               Gragnano |         49        0.34       24.35
-                                Morcone |         49        0.34       24.70
-                           Castellamare |         48        0.34       25.03
-                                Leipzig |         48        0.34       25.37
-                            West Indies |         48        0.34       25.71
-                                 Agnone |         47        0.33       26.04
-                                 Bovino |         47        0.33       26.37
-                          Castrofilippo |         47        0.33       26.70
-                                Curland |         47        0.33       27.03
-                                 Salina |         47        0.33       27.36
-                                  Argos |         46        0.32       27.68
-                                 Bivona |         46        0.32       28.00
-                                   Hull |         46        0.32       28.33
-                                Kolomea |         46        0.32       28.65
-                               Limerick |         46        0.32       28.97
-                              Mirabella |         46        0.32       29.30
-                            Muro Lucano |         46        0.32       29.62
-                               S Donato |         46        0.32       29.94
-                              St Helens |         46        0.32       30.26
-                                Sulmona |         46        0.32       30.59
-                                  Homel |         45        0.32       30.90
-                                  Kieff |         45        0.32       31.22
-                          Pontelandolfo |         45        0.32       31.54
-                                    Rio |         45        0.32       31.85
-                             S Giovanni |         45        0.32       32.17
-                                Tegiano |         45        0.32       32.48
-                               Villalba |         45        0.32       32.80
-                                      B |         44        0.31       33.11
-                                Biccari |         44        0.31       33.42
-                               Botosani |         44        0.31       33.73
-                                Ciminna |         44        0.31       34.04
-                                  Greci |         44        0.31       34.34
-                                  Kovno |         44        0.31       34.65
-                              Mistretta |         44        0.31       34.96
-                             S Caterina |         44        0.31       35.27
-                               San Jose |         44        0.31       35.58
-                                Sanfele |         44        0.31       35.89
-                                  Wigan |         44        0.31       36.20
-                              Bellshill |         43        0.30       36.50
-                                 Beyrut |         43        0.30       36.80
-                              Carovilli |         43        0.30       37.10
-                                Cermini |         43        0.30       37.41
-                             Coatbridge |         43        0.30       37.71
-                                Laibach |         43        0.30       38.01
-                         London England |         43        0.30       38.31
-                               Petralia |         43        0.30       38.61
-                                  Polla |         43        0.30       38.92
-                                  South |         43        0.30       39.22
-                                  Austr |         42        0.29       39.51
-                                Calitri |         42        0.29       39.81
-                           Castelfranco |         42        0.29       40.10
-                                 Grotte |         42        0.29       40.40
-                             Kilmarnock |         42        0.29       40.69
-                              Pettorano |         42        0.29       40.99
-                                    Pos |         42        0.29       41.28
-                              Regalbuto |         42        0.29       41.58
-                                 Slonim |         42        0.29       41.87
-                                 Tarnow |         42        0.29       42.17
-                                 Atrani |         41        0.29       42.45
-                          Caltabellotta |         41        0.29       42.74
-                            Castroreale |         41        0.29       43.03
-                                 Ragusa |         41        0.29       43.32
-                         Rio De Janeiro |         41        0.29       43.61
-                                Roubaix |         41        0.29       43.89
-                                     Sa |         41        0.29       44.18
-                                  Jossy |         40        0.28       44.46
-                            Marianopoli |         40        0.28       44.74
-                           Montecorvino |         40        0.28       45.02
-                                Suwalky |         40        0.28       45.31
-                             Throndhjem |         40        0.28       45.59
-                                   Tusa |         40        0.28       45.87
-                                 Wishaw |         40        0.28       46.15
-                                  Bacau |         39        0.27       46.42
-                                 Bolton |         39        0.27       46.70
-                                 Burgio |         39        0.27       46.97
-                             Czernowitz |         39        0.27       47.24
-                               Goteborg |         39        0.27       47.52
-                                 L'Pool |         39        0.27       47.79
-                                Warshaw |         39        0.27       48.07
-                                 Aversa |         38        0.27       48.33
-                                 Batoum |         38        0.27       48.60
-                             Calabritto |         38        0.27       48.87
-                                Dresden |         38        0.27       49.13
-                               Faicchio |         38        0.27       49.40
-                              Frosolone |         38        0.27       49.67
-                                 Sciara |         38        0.27       49.93
-                               Sorrento |         38        0.27       50.20
-                             Strassburg |         38        0.27       50.47
-                                Warshau |         38        0.27       50.73
-                                Amantea |         37        0.26       50.99
-                                Baucina |         37        0.26       51.25
-                                Bellona |         37        0.26       51.51
-                               Caposele |         37        0.26       51.77
-                               Contessa |         37        0.26       52.03
-                                   Lago |         37        0.26       52.29
-                             Laurenzano |         37        0.26       52.55
-                                    Pol |         37        0.26       52.81
-                                 Prizzi |         37        0.26       53.07
-                             Rutherglen |         37        0.26       53.33
-                                  Skien |         37        0.26       53.59
-                                 Slutzk |         37        0.26       53.85
-                                  Agira |         36        0.25       54.10
-                           Buenos Ayres |         36        0.25       54.36
-                               Fisciano |         36        0.25       54.61
-                             Glucksthal |         36        0.25       54.86
-                                Parenti |         36        0.25       55.12
-                                 Sparte |         36        0.25       55.37
-                                 Casoli |         35        0.25       55.61
-                                Drammen |         35        0.25       55.86
-                                 Dudley |         35        0.25       56.11
-                                Halifax |         35        0.25       56.35
-                              Jerusalem |         35        0.25       56.60
-                              Jugo-Slav |         35        0.25       56.84
-                                 Kassel |         35        0.25       57.09
-                              Kischinew |         35        0.25       57.33
-                           Kristiansund |         35        0.25       57.58
-                                  Lpool |         35        0.25       57.83
-                                 Mandal |         35        0.25       58.07
-                                 Oldham |         35        0.25       58.32
-                            S Salvatore |         35        0.25       58.56
-                               Salandra |         35        0.25       58.81
-                                Swansea |         35        0.25       59.05
-                               Tarnopol |         35        0.25       59.30
-                                  Troia |         35        0.25       59.55
-                              Verbicaro |         35        0.25       59.79
-                               Bukarest |         34        0.24       60.03
-                             Calatafimi |         34        0.24       60.27
-                                Farsund |         34        0.24       60.51
-                                Gallico |         34        0.24       60.75
-                                 Larvik |         34        0.24       60.99
-                                 Merida |         34        0.24       61.22
-                               Monreale |         34        0.24       61.46
-                             Montalbano |         34        0.24       61.70
-                           Poggiomarino |         34        0.24       61.94
-                                  Prata |         34        0.24       62.18
-                             Ricigliano |         34        0.24       62.42
-                              Accettura |         33        0.23       62.65
-                                 Airola |         33        0.23       62.88
-                               Alberona |         33        0.23       63.11
-                               Alfedena |         33        0.23       63.35
-                                  Basel |         33        0.23       63.58
-                                      C |         33        0.23       63.81
-                                 Fanano |         33        0.23       64.04
-                               Fornelli |         33        0.23       64.27
-                                 Giarre |         33        0.23       64.50
-                               Maschito |         33        0.23       64.74
-                             Monteforte |         33        0.23       64.97
-                              Newcastle |         33        0.23       65.20
-                                  Panni |         33        0.23       65.43
-                                  Pirie |         33        0.23       65.66
-                               Rogliano |         33        0.23       65.89
-                                Sealand |         33        0.23       66.13
-                                  Apice |         32        0.22       66.35
-                               Arbroath |         32        0.22       66.58
-                                 Athens |         32        0.22       66.80
-                                  Berne |         32        0.22       67.02
-                             Bialystock |         32        0.22       67.25
-                           Castelgrande |         32        0.22       67.47
-                                Esbjerg |         32        0.22       67.70
-                                  Essen |         32        0.22       67.92
-                              Gasperina |         32        0.22       68.15
-                               Grimstad |         32        0.22       68.37
-                                 Landau |         32        0.22       68.60
-                                   Lens |         32        0.22       68.82
-                                  Maida |         32        0.22       69.05
-                              Montevago |         32        0.22       69.27
-                                 Popoli |         32        0.22       69.50
-                             Senigallia |         32        0.22       69.72
-                              Spadafora |         32        0.22       69.95
-                              Stanislau |         32        0.22       70.17
-                             Stevenston |         32        0.22       70.40
-                                  A'Dam |         31        0.22       70.61
-                             Alexandrie |         31        0.22       70.83
-                                   Bern |         31        0.22       71.05
-                                Cassano |         31        0.22       71.27
-                               Cimitile |         31        0.22       71.48
-                                  Derby |         31        0.22       71.70
-                                Ferrara |         31        0.22       71.92
-                                Godrano |         31        0.22       72.14
-                                  Govan |         31        0.22       72.35
-                            Helsingborg |         31        0.22       72.57
-                               Lanciano |         31        0.22       72.79
-                            Mexico City |         31        0.22       73.01
-                                  Nusco |         31        0.22       73.23
-                         Palo Del Colle |         31        0.22       73.44
-                              Resuttano |         31        0.22       73.66
-                            S Valentino |         31        0.22       73.88
-                                 Smyrne |         31        0.22       74.10
-                             So America |         31        0.22       74.31
-                              The Hague |         31        0.22       74.53
-                              Trondhjem |         31        0.22       74.75
-                            Valledolino |         31        0.22       74.97
-                                 Alvito |         30        0.21       75.18
-                                 Avella |         30        0.21       75.39
-                                 Boiano |         30        0.21       75.60
-                               Bukowina |         30        0.21       75.81
-                           Castelvetere |         30        0.21       76.02
-                               Damascus |         30        0.21       76.23
-                              Drontheim |         30        0.21       76.44
-                              Gibraltar |         30        0.21       76.65
-                               Giuliana |         30        0.21       76.86
-                              Harlingen |         30        0.21       77.07
-                             Laurenzana |         30        0.21       77.28
-                                Marzano |         30        0.21       77.49
-                                Mogilew |         30        0.21       77.71
-                                Pachino |         30        0.21       77.92
-                                  Palmi |         30        0.21       78.13
-                                Pollica |         30        0.21       78.34
-                                  Rende |         30        0.21       78.55
-                                   Rodi |         30        0.21       78.76
-                                  Rssia |         30        0.21       78.97
-                                  Ruoti |         30        0.21       79.18
-                               S Pietro |         30        0.21       79.39
-                                   Slov |         30        0.21       79.60
-                         Stella Cilento |         30        0.21       79.81
-                               Tonsberg |         30        0.21       80.02
-                                   Uden |         30        0.21       80.23
-                            Villafranca |         30        0.21       80.44
-                             Capestrano |         29        0.20       80.65
-                              Cianciana |         29        0.20       80.85
-                                 Dolina |         29        0.20       81.05
-                                   Fano |         29        0.20       81.26
-                                Focsani |         29        0.20       81.46
-                                 Grodna |         29        0.20       81.67
-                                 Kandel |         29        0.20       81.87
-                              Lillesand |         29        0.20       82.07
-                             Monteleone |         29        0.20       82.28
-                                  Perth |         29        0.20       82.48
-                                Potenzo |         29        0.20       82.68
-                                   Rose |         29        0.20       82.89
-                                 Rusfia |         29        0.20       83.09
-                                      S |         29        0.20       83.29
-                             S Guiseppe |         29        0.20       83.50
-                              S Martino |         29        0.20       83.70
-                                 Sambor |         29        0.20       83.91
-                               San Fele |         29        0.20       84.11
-                                  Sligo |         29        0.20       84.31
-                             Villafrati |         29        0.20       84.52
-                                 Almelo |         28        0.20       84.71
-                             Aprigliano |         28        0.20       84.91
-                                   Belz |         28        0.20       85.11
-                               Beresina |         28        0.20       85.30
-                                 Bogota |         28        0.20       85.50
-                               Capaccio |         28        0.20       85.70
-                               Carleone |         28        0.20       85.89
-                                Carolei |         28        0.20       86.09
-                                 Celano |         28        0.20       86.29
-                             Gothenberg |         28        0.20       86.48
-                                  Kassa |         28        0.20       86.68
-                                 Kobrin |         28        0.20       86.88
-                                  Leith |         28        0.20       87.07
-                               Longford |         28        0.20       87.27
-                                  Mlawa |         28        0.20       87.47
-                                Montese |         28        0.20       87.66
-                                  Palma |         28        0.20       87.86
-                                Picerno |         28        0.20       88.06
-                                 S Amer |         28        0.20       88.25
-                               Santiago |         28        0.20       88.45
-                               Saponara |         28        0.20       88.65
-                                Solofra |         28        0.20       88.84
-                                 Styria |         28        0.20       89.04
-                                  Tyrol |         28        0.20       89.24
-                                 Veroli |         28        0.20       89.43
-                                 Alatri |         27        0.19       89.62
-                                Antopol |         27        0.19       89.81
-                                   Anzi |         27        0.19       90.00
-                                B Aires |         27        0.19       90.19
-                                  Barga |         27        0.19       90.38
-                           Boscotrecase |         27        0.19       90.57
-                               Casabona |         27        0.19       90.76
-                                Centola |         27        0.19       90.95
-                                 Durham |         27        0.19       91.14
-                             Ferrandina |         27        0.19       91.33
-                                  Havre |         27        0.19       91.52
-                                Kilsyth |         27        0.19       91.71
-                                  Makow |         27        0.19       91.90
-                               Monaghan |         27        0.19       92.09
-                              Mussomeli |         27        0.19       92.28
-                                Paterno |         27        0.19       92.47
-                                  Posen |         27        0.19       92.66
-                                Procida |         27        0.19       92.84
-                                      R |         27        0.19       93.03
-                                 Roseto |         27        0.19       93.22
-                                    S A |         27        0.19       93.41
-                                 Sturno |         27        0.19       93.60
-                                 Tarsia |         27        0.19       93.79
-                                      A |         26        0.18       93.98
-                                Ateleta |         26        0.18       94.16
-                                 Baiano |         26        0.18       94.34
-                            Baillieston |         26        0.18       94.52
-                                Balvano |         26        0.18       94.71
-                                Bitonto |         26        0.18       94.89
-                                 Bosnia |         26        0.18       95.07
-                                  Canna |         26        0.18       95.25
-                                    Csl |         26        0.18       95.44
-                                  Damas |         26        0.18       95.62
-                               Domanico |         26        0.18       95.80
-                            Dunfermline |         26        0.18       95.98
-                            Havana Cuba |         26        0.18       96.17
-                         Jekaterinoslaw |         26        0.18       96.35
-                               Mannheim |         26        0.18       96.53
-                              Moliterno |         26        0.18       96.71
-                              Morriston |         26        0.18       96.90
-                                Oliveto |         26        0.18       97.08
-                                 Orsara |         26        0.18       97.26
-                                Ouddorp |         26        0.18       97.44
-                               Platania |         26        0.18       97.63
-                                Polermo |         26        0.18       97.81
-                              Racalmuto |         26        0.18       97.99
-                        Reggio Calabria |         26        0.18       98.17
-                                  Risor |         26        0.18       98.36
-                               S Egidio |         26        0.18       98.54
-                             S Giuseppe |         26        0.18       98.72
-                                 Shotts |         26        0.18       98.90
-                                   Sora |         26        0.18       99.09
-                                 Speier |         26        0.18       99.27
-                                  Stryj |         26        0.18       99.45
-                                Us Born |         26        0.18       99.63
-                            Vinchiaturo |         26        0.18       99.82
-                               Vittoria |         26        0.18      100.00
-----------------------------------------+-----------------------------------
-
+////////////////////
 
 
 
@@ -1047,15 +956,19 @@ tab origin if (origin_country == "Glasgow"), sort
 
 // This will fill empty countries based on given cities, for instance, if the city was Sydney then it would fill Australia, but the relationship needs to be unique, which requires lots of cleaning.
 
-// Chagne the formatting
+// Change the formatting
 encode origin_city, gen(n_origin_city)
 encode origin_country, gen(n_origin_country)
 
 // Find the ones that are not unique
 capture ssc install egenmore
-drop countries
+//drop countries
 bys origin_city: egen countries = nvals(origin_country)
 // Look for: countries>1
+
+tab countries, sort
+
+tab origin_city if countries == 1 & missing(origin_country), sort
 
 // Do the actual filling
 net from http://www.sealedenvelope.com/
