@@ -20,7 +20,7 @@ and an extension of the package could be to specify your time period of interest
 so not all being pushed to modern.)
 */
 
-// Running notes: Can run up to line 950 and it should all work. After that is working code or debris.
+// Running notes: Can run up to line 940 and it should all work. After that is working code or debris.
 
 //////////////////////// Initial set up and load data ////////////////////////
 clear all
