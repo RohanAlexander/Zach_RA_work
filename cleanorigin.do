@@ -20,7 +20,7 @@ and an extension of the package could be to specify your time period of interest
 so not all being pushed to modern.)
 */
 
-
+// Running notes: Can run up to line 950 and it should all work. After that is working code or debris.
 
 //////////////////////// Initial set up and load data ////////////////////////
 clear all
@@ -30,7 +30,7 @@ set more off
 
 use "/hdir/0/monicah/Desktop/EIbrothers18921924.dta"
 
-
+cd "/hdir/0/monicah/Desktop/All"
 
 //////////////////////// Start separating the cities and countries ////////////////////////
 //Separate origin based on the first comma
@@ -53,8 +53,8 @@ rename origin_country_from_reversed origin_country
 // charlist origin_country
 replace origin_city = subinstr(origin_city, char(160), "", .)
 replace origin_country = subinstr(origin_country, char(160), "", .)
-//replace origin_city = subinstr(origin_city, "�", "", .)
-//replace origin_country = subinstr(origin_country, "�", "", .)
+//replace origin_city = subinstr(origin_city, "Ã", "", .)
+//replace origin_country = subinstr(origin_country, "Ã", "", .)
 replace origin_city = subinstr(origin_city, ".", "", .)
 replace origin_city = subinstr(origin_city, "'", " ", .)
 replace origin_city = subinstr(origin_city, ";", " ", .)
@@ -64,8 +64,52 @@ replace origin_country = trim(origin_country)
 replace origin_city = trim(origin_city)
 replace origin_country = strproper(origin_country)
 replace origin_city = strproper(origin_city)
+replace origin = trim(origin)
+replace ethnicity = strproper(ethnicity)
 
+// Remove duplicates
+replace impliedBirthYear = "Â 1889-1890" if impliedBirthYear=="Â 1?89-1890"
+//duplicates report
+//duplicates list
+duplicates drop
 
+// Deal with the IDs that have multiple ethnicities (these occur on different rows)
+// First add a column that has the number of observations (ethnicities) that each ID has
+by ID, sort: generate number_of_ethnicities = _N
+// Add a column that suggests whether the observation is the first of that ID or not (e.g. using names instead of ID numbers: Rohan; Rohan; Alexander would be 1, 0, 1)
+egen tag = tag(ID)
+tabulate number_of_ethnicities if tag
+//drop tag
+// Add a column that is a counter by ID. e.g. "Rohan, Rohan, John, John, John, Zach, Martine" goes to "1, 2, 1, 2, 3, 1, 1"
+sort ID
+by ID: generate counter_by_ID = _n
+// Second, iterate through the number of ethnicities to save separate dataframes based on the number of ethnicities
+preserve
+keep if (counter_by_ID == 2)
+keep ID ethnicity
+rename ethnicity second_ethnicity
+save only_two
+restore, preserve
+keep if (counter_by_ID == 3)
+keep ID ethnicity
+rename ethnicity third_ethnicity
+save only_three
+restore, preserve
+keep if (counter_by_ID == 4)
+keep ID ethnicity
+rename ethnicity fourth_ethnicity
+save only_four
+restore
+keep if counter_by_ID == 1
+// Third, do the merge
+merge 1:1 ID using only_two
+drop _merge
+merge 1:1 ID using only_three
+drop _merge
+merge 1:1 ID using only_four
+drop _merge
+// Fourth, clean up
+drop number_of_ethnicities tag counter_by_ID
 
 //////////////////////// Typos in the cities names ////////////////////////
 //Clean some typos in the cities names
@@ -462,10 +506,6 @@ foreach town of local Bahrain {
 	quietly replace origin_country = "Bahrain" if (origin_country == "`town'")
 }
 
-local Barbados `" "�Christ Church, Barbados, W. I." "�Christ Ch, Barbados, W. I." "�St. Thomas, Barbados, W. I." "�Bridgetown, Barbados, W. Ind." "�Hastings, Barbados, W. Ind." "'
-foreach town of local Barbados {
-	replace origin_country = "Barbados" if (origin == "`town'")
-}
 
 local Belarus `" "Bobruisk" "Sluck" "Brest Lit" "Sluzk" "Antopol" "Kobrin" "Beresina" "Grodna" "Mogilew" "Slutzk" "Slonim" "Homel" "'
 foreach town of local Belarus {
@@ -475,11 +515,6 @@ foreach town of local Belarus {
 local Belgium `" "Thielt" "Knocke" "Gent" "Nevele" "Belgian" "Verviers" "Beveren" "Jemappes" "Vracene" "Antwerpen" "Bassevelde" "Brussels" "Jumet" "Antwerp" "'
 foreach town of local Belgium {
 	quietly replace origin_country = "Belgium" if (origin_country == "`town'")
-}
-
-local Bermuda `" "�Hamilton, Bermuda, W I" "�Hamilton, Bermuda, W. I." "�Hamilton, Bermuda, W. Ind." "�Pembroke, Bermuda, W. Ind" "�Paget, Bermuda, W. Ind." "�Warwick, Bermuda, W. Ind" "'
-foreach town of local Bermuda {
-	replace origin_country = "Bermuda" if (origin == "`town'")
 }
 
 local BosniaAndHerzegovina `" "Resina" "'
@@ -527,11 +562,6 @@ foreach town of local Cuba {
 	quietly replace origin_country = "Cuba" if (origin_country == "`town'")
 }
 
-local Cuba `" "�Havana, Cuba, W. I." "�Bayate, Cuba, W. I." "�Havana, Cuba, W. Ind." "�Havana, Cuba, W Ind." "�Santiago, Cuba, W Ind" "�Camaguey, Cuba, W. Ind." "'
-foreach town of local Cuba {
-	replace origin_country = "Cuba" if (origin == "`town'")
-}
-
 local Cyprus `" "Nicosia" "Chypre" "'
 foreach town of local Cyprus {
 	quietly replace origin_country = "Cyprus" if (origin_country == "`town'")
@@ -550,11 +580,6 @@ foreach town of local Denmark {
 local DominicanRepublic `" "Sto Dgo" "'
 foreach town of local DominicanRepublic {
 	quietly replace origin_country = "Dominican Republic" if (origin_country == "`town'")
-}
-
-local DominicanRepublic `" "�Plo Plata, Dom. Rep., W. I." "�Pto Plata, St. Dom., W. I." "�Pto Plata, W. I." "�Sanchez, D.R., W. Ind." "'
-foreach town of local DominicanRepublic {
-	quietly replace origin_country = "Dominican Republic" if (origin == "`town'")
 }
 
 local Egypt `" "Cario" "Alexandrie" "'
@@ -630,11 +655,6 @@ foreach town of local Italy {
 local Jamaica `" "Kingston" "'
 foreach town of local Jamaica {
 	quietly replace origin_country = "Jamaica" if (origin_country == "`town'")
-}
-
-local Jamaica `" "�Kingston, Jamaica, W. I." "�Devon, Jamaica, W. I." "�Port Antonio, Jamaica, W. I." "�Runaway Bay, Jamaica, W Ind" "�Kingston, Jamaica , W. Ind." "�Kingston, Ja., W. Ind." "�Kingston, W. Ind." "'
-foreach town of local Jamaica {
-	replace origin_country = "Jamaica" if (origin == "`town'")
 }
 
 local Latvia `" "Dwinsk" "Libau" "Mitau" "'
@@ -812,19 +832,9 @@ foreach town of local TheBahamas {
 	quietly replace origin_country = "The Bahamas" if (origin_country == "`town'")
 }
 
-local TheBahamas `" "�Nassau, Bahamas, W. Ind." "'
-foreach town of local TheBahamas {
-	replace origin_country = "The Bahamas" if (origin == "`town'")
-}
-
 local TrinidadAndTobago `" "T'Dad" "'
 foreach town of local TrinidadAndTobago {
 	quietly replace origin_country = "Trinidad and Tobago" if (origin_country == "`town'")
-}
-
-local TrinidadAndTobago `" "�Port of Spain, Trinidad, W. Ind." "�Belmont, Trinidad, W. Ind." "�Port of Spain, Trindad, W. Ind." "�Port of Spain, W Ind." "�Port of Spain, W. I." "'
-foreach town of local TrinidadAndTobago {
-	quietly replace origin_country = "Trinidad and Tobago" if (origin == "`town'")
 }
 
 local Tunisia `" "Tunis" "Monastir" "Tunisi" "Tunisie" "'
@@ -868,18 +878,85 @@ foreach town of local Yugoslavia {
 	quietly replace origin_country = "Yugoslavia" if (origin_country == "`town'")
 }
 
-local COMEBACKTOME  `" "Maryhill" "South America" "West Ind" "Frank" "Kulm" "Samsonn" "Alva" "Ansonia" "M" "Pyrus" "Bacan" "Mora" "Christiana" "Dabar" "Gallina" "Johnston" "Oe" "Selz" "Asia" "Mir" "S Fili" "St George" "Staranger" "Vita" "Kalish" "So A" "Sw" "Aleamo" "Burnbank" "Galston" "Gr" "Hungar" "Mitan" "Rosenberg" "Stella" "W" "Gilly" "Grodns" "Newton" "Stmichaels" "Willington" "Campagua" "L" "Naro" "Rp" "Turky A" "Baghena" "C Am" "Gallo" "Ha" "Jersey" "Korono" "Montebello" "Newport" "S Am" "Turk A" "Archipelago" "Basso" "Bla" "By" "Foggio" "Ia" "Kovna" "Leeland" "S America" "S Land" "Wilma" "Cava" "Kolb" "Luna" "O Asia" "Osch" "Pico" "Riva" "Alessand" "Archipelagos" "Austria Hungary" "Bangor" "Bel" "Borisow" "Francais" "Fredriksen" "Hastings" "Holden" "Jam" "Kadam" "Keiw" "Melissa" "Middlesboro" "Novi" "Rada" "Renan" "Rouse" "S Asia" "Smirne" "St Tuna" "T E" "Trenta" "Vehdrtz" "Vietri" "Al" "Armadale" "B'Da" "Canamo" "D W I" "Douglas" "Freestate Of Danzig" "H" "Halbstadt" "Harwood" "Isola" "Koretz" "Kronenthal" "Montrone" "Motta" "P" "Petersburg" "Ruda" "Ser" "St Johns" "Tocsani" "Trone" "Ponewesh" "Terseke" "Elisabethgrad" "Kischenew" "Ottaiano" "Caltanis" "Cotenza" "Erapani" "Schoondyke" "Ceora" "Crapani" "Czerkas" "Ferenini" "Harpoot" "Kenouria" "Trebizonde" "C Amer" "La" "Piracus" "Sercara" "Borislaw" "Jessy" "S Angelo Lomb" "Sciacea" "Calliano" "Elisawetgrad" "Jawidcze" "Serbs Croats & Slovenes" "Tavricien" "Trifail" "Wilkomir" "Jekaterinaslaw" "Marsiconnovo" "S Giuseppe Tato" "Sarotow" "Tenanni" "Tennini" "Tripolitza" "Wastirsi" "Witkowitz" "Christiansund" "Ekaterinaslaw" "Frabia" "Kamenitz" "Kischeneff" "Krainburg" "Porsgrund" "Resicza" "Solmona" "Begrouth" "Beresin" "Bessarab" "Boriphan" "Braumlueig" "Delianova" "Elizabethgrad" "Friutrop" "Fwi" "Glogon" "Goyeo" "Minsh" "Oliveto Citro" "Osick" "Wasilesky" "Zigmarz" "Bialostok" "Boslaw" "Capna" "Capriati Volt" "Cegiano" "Coritza" "Lomsa" "Muro Luc" "Niksich" "Palerino" "S Lupo" "Shaptza" "Smilowitz" "Neudorf" "St Helens" "Mirabella" "Blantyre" "Damas" "Csl" "Canna" "Tarsia" "Roseto" "Paterno" "Monaghan" "Makow" "Havre" "Leith" "Kassa" "Rose" "Potenzo" "Monteleone" "Kandel" "Dolina" "Slov" "Rodi" "Harlingen" "Bukowina" "Valledolino" "A'Dam" "Maida" "Lens" "Sealand" "Pirie" "Prata" "Dudley" "Parenti" "Pol" "Laurenzano" "Lago" "Contessa" "Tusa" "Suwalky" "Jossy" "Pos" "South" "Austr" "B" "Cermini" "Villalba" "Salina" "West Indies" "Elena" "Chrsand" "Meta" "Stanislaw" "Sora" "Speier" "Augusta" "Nola" "Johnstone" "Bancina" "T A" "Alife" "Naso" "Norka" "Sa" "R" "A" "S" "C" "Ta" "U" "Bella" "Campobello" "Alia" "Acri" "Villarosa" "Patti" "Altavilla" "Tyrone" "Nicastro" "So America" "Non Immigrant Alien" "Prussia" "Persia" "Africa" "Wi" "S Amer" "S A" "Wolyn" "Hamilton" "So Amer" "Belmonte" "Rus" "So Am" "S H S" "Russ" "Jutland" "Lesser Antilles" "W I" "W Ind" "'
-foreach town of local COMEBACKTOME {
-	quietly replace origin_country = "COMEBACKTOME" if (origin_country == "`town'")
+//////////////////
+// Change the decision to be based on origin instead of origin_country
+local Barbados `" "Â Christ Church, Barbados, W. I." "Â Christ Ch, Barbados, W. I." "Â St. Thomas, Barbados, W. I." "Â Bridgetown, Barbados, W. Ind." "Â Hastings, Barbados, W. Ind." "'
+foreach town of local Barbados {
+	replace origin_country = "Barbados" if (origin == "`town'")
+}
+
+local Bermuda `" "Â Hamilton, Bermuda, W I" "Â Hamilton, Bermuda, W. I." "Â Hamilton, Bermuda, W. Ind." "Â Pembroke, Bermuda, W. Ind" "Â Paget, Bermuda, W. Ind." "Â Warwick, Bermuda, W. Ind" "'
+foreach town of local Bermuda {
+	replace origin_country = "Bermuda" if (origin == "`town'")
+}
+
+local Cuba `" "Â Havana, Cuba, W. I." "Â Bayate, Cuba, W. I." "Â Havana, Cuba, W. Ind." "Â Havana, Cuba, W Ind." "Â Santiago, Cuba, W Ind" "Â Camaguey, Cuba, W. Ind." "'
+foreach town of local Cuba {
+	replace origin_country = "Cuba" if (origin == "`town'")
+}
+
+local Denmark `" "Â Jutland" "'
+foreach town of local Denmark {
+	replace origin_country = "Denmark" if (origin == "`town'")
+}
+
+local DominicanRepublic `" "Â Plo Plata, Dom. Rep., W. I." "Â Pto Plata, St. Dom., W. I." "Â Pto Plata, W. I." "Â Sanchez, D.R., W. Ind." "'
+foreach town of local DominicanRepublic {
+	replace origin_country = "Dominican Republic" if (origin == "`town'")
+}
+
+local Italy `" "Â Nicastro", "Â Acri", "Â Villarosa", "Â Campobello", "Â Naso", "Â Alife" "'
+foreach town of local Italy {
+	replace origin_country = "Italy" if (origin == "`town'")
+}
+
+local Jamaica `" "Â Kingston, Jamaica, W. I." "Â Devon, Jamaica, W. I." "Â Port Antonio, Jamaica, W. I." "Â Runaway Bay, Jamaica, W Ind" "Â Kingston, Jamaica , W. Ind." "Â Kingston, Ja., W. Ind." "Â Kingston, W. Ind." "'
+foreach town of local Jamaica {
+	replace origin_country = "Jamaica" if (origin == "`town'")
+}
+
+local Malawi `" "Â Blantyre" "'
+foreach town of local Malawi {
+	replace origin_country = "Malawi" if (origin == "`town'")
+}
+
+local Portugal `" "Â Belmonte" "'
+foreach town of local Portugal {
+	replace origin_country = "Portugal" if (origin == "`town'")
+}
+
+local Switzerland `" "Â Altavilla" "'
+foreach town of local Switzerland {
+	replace origin_country = "Switzerland" if (origin == "`town'")
+}
+
+local TheBahamas `" "Â Nassau, Bahamas, W. Ind." "'
+foreach town of local TheBahamas {
+	replace origin_country = "The Bahamas" if (origin == "`town'")
+}
+
+local TrinidadAndTobago `" "Â Port of Spain, Trinidad, W. Ind." "Â Belmont, Trinidad, W. Ind." "Â Port of Spain, Trindad, W. Ind." "Â Port of Spain, W Ind." "Â Port of Spain, W. I." "'
+foreach town of local TrinidadAndTobago {
+	replace origin_country = "Trinidad and Tobago" if (origin == "`town'")
 }
 
 
 
 
 
-////////////////////
 
+
+
+
+
+
+
+
+//////////////////// This is the working code to work out what to clean
 // Create a flag indicating whether the origin_country is a modern country
+// CHANGE THIS TO REFER TO ZACH'S IPUMS LIST
+// Instruction: So the goal is to create bpl codes for each observation. The bpl codes are from IPUMS USA and are by country of birth, which should answer some of your questions (e.g. Prussia goes to Germany, Sicily to Italy, etc.). The historical regions are usually coded at a more aggregated level. See https://usa.ipums.org/usa-action/variables/BPL#codes_section (not the detailed codes).
+// Things get tricky when dealing with World War I boundary changes in eastern Europe, especially because we're going to be relying on the 1920, 1930 and 1940 Census. Before I have aggregated countries up to pre World War I boundaries. First, I would get them into modern BPL codes and we can decide how to aggregate them later, unless you think something else is better.
 // Initial list is from http://m.state.gov/mc17517.htm, but with United States added, and some formatting ', ,, - removed. After that there are a few countries that were added (see the final line of the macro) because they are reasonable as historical countries
 // drop is_country_flag
 gen is_country_flag = .
@@ -894,45 +971,259 @@ local list_of_countries `" `list_of_countries' "San Marino" "Sao Tome and Princi
 local list_of_countries `" `list_of_countries' "Swaziland" "Sweden" "Switzerland" "Syria" "Taiwan" "Tajikistan" "Tanzania" "Thailand" "Timor Leste" "Togo" "Tonga" "Trinidad and Tobago" "Tunisia" "Turkey" "Turkmenistan" "Tuvalu" "Uganda" "Ukraine" "United Arab Emirates" "United Kingdom" "Uruguay" "Uzbekistan" "Vanuatu" "Venezuela" "Vietnam" "Yemen" "Zambia" "Zimbabwe" "'
 local list_of_countries `" `list_of_countries' "United States" "Galicia" "'
 
-// display `"`list_of_countries'"'
-// Iterate through the list of countries and add a flag if it's not a country.  
-foreach country of local list_of_countries {
-	quietly replace is_country_flag = 1 if (origin_country == "`country'") 
-}
-
-
-// Create a flag indicating whether the origin_country is a reasonable country for the purposes of for now
-// drop is_reasonable_flag
-gen is_reasonable_flag = .
-local list_of_reasonable `" "England" "Wales" "Scotland" "Yugoslavia" "Bermuda" "Czechoslovakia" "The Bahamas" "Lebanon" "Ukraine" "Northern Ireland" "British Guiana" "'
-
-// display `"`list_of_countries'"'
-// Iterate through the list of countries and add a flag if it's not a country.  
-foreach country of local list_of_reasonable {
-	quietly replace is_reasonable_flag = 1 if (origin_country == "`country'") 
-}
-
-
 // Use this to list the countries that need to be looked at
 // drop country_frequency
 egen country_frequency = count(1), by(origin_country)
 gsort -country_frequency origin_country
 
 // Get a list of rows to clean
-tab origin_country if country_frequency > 10 & !missing(country_frequency) & missing(is_country_flag) & missing(is_reasonable_flag), sort
+tab origin_country if country_frequency > 10 & missing(is_country_flag), sort
 
-// Look at these next:
-// Go through the COMEBACKTOME countries
+// Use this to get the data that you need in order to fix origin
+foreach country of local LookingAt {
+	tab origin if origin_country == "`country'", sort
+}
 
-
-
-// Use this to look at the country of interest (replace HERE with the country):
-local LookingAt `" "W I" "'
 foreach country of local LookingAt {
 	tab origin if origin_country == "`country'", sort
 	tab origin_city if origin_country == "`country'", sort
 	tab ethnicity if origin_country == "`country'"
 }
+
+// Look at these next:
+                                So Am |        265        0.65       84.62
+                                  S H S |        242        0.60       85.22
+                                   Russ |        222        0.55       85.76
+                                     Wi |        150        0.37       86.13
+                                  Wolyn |        138        0.34       86.48
+                                So Amer |        107        0.26       86.74
+                               Hamilton |        100        0.25       86.99
+                                 Africa |         99        0.24       87.23
+                                  Patti |         97        0.24       87.47
+                                 Tyrone |         95        0.23       87.71
+                                 Persia |         94        0.23       87.94
+                                Prussia |         87        0.21       88.15
+                                   Alia |         86        0.21       88.37
+                                  Bella |         80        0.20       88.56
+                                    Rus |         73        0.18       88.74
+                                      U |         68        0.17       88.91
+                                  Norka |         58        0.14       89.06
+                                Bancina |         57        0.14       89.20
+                                   Nola |         54        0.13       89.33
+                                Augusta |         53        0.13       89.46
+                                   Meta |         52        0.13       89.59
+                                  Elena |         50        0.12       89.71
+                                Neudorf |         48        0.12       89.83
+                                     Ta |         48        0.12       89.95
+                            West Indies |         48        0.12       90.07
+                                 Salina |         47        0.12       90.18
+                              Mirabella |         46        0.11       90.30
+                    Non Immigrant Alien |         46        0.11       90.41
+                              Stanislaw |         46        0.11       90.53
+                                    T A |         45        0.11       90.64
+                               Villalba |         45        0.11       90.75
+                                Cermini |         43        0.11       90.85
+                                  South |         43        0.11       90.96
+                                Chrsand |         42        0.10       91.06
+                              Johnstone |         42        0.10       91.17
+                                      B |         41        0.10       91.27
+                                  Jossy |         40        0.10       91.37
+                                    Pos |         40        0.10       91.47
+                                   Tusa |         40        0.10       91.57
+                               Contessa |         37        0.09       91.66
+                             Laurenzano |         37        0.09       91.75
+                                Parenti |         36        0.09       91.84
+                              St Helens |         36        0.09       91.93
+                                    Pol |         35        0.09       92.01
+                                  Austr |         34        0.08       92.10
+                                     Sa |         34        0.08       92.18
+                                  Pirie |         33        0.08       92.26
+                                 Dudley |         32        0.08       92.34
+                                   Lago |         32        0.08       92.42
+                                   Lens |         32        0.08       92.50
+                                  Maida |         32        0.08       92.58
+                                  Prata |         32        0.08       92.66
+                                Suwalky |         32        0.08       92.74
+                                  A'Dam |         31        0.08       92.81
+                                      C |         31        0.08       92.89
+                            Valledolino |         31        0.08       92.97
+                              Harlingen |         30        0.07       93.04
+                                   Rodi |         30        0.07       93.12
+                                 Kandel |         29        0.07       93.19
+                             Monteleone |         29        0.07       93.26
+                                Potenzo |         29        0.07       93.33
+                                   Rose |         29        0.07       93.40
+                                      S |         29        0.07       93.47
+                               Bukowina |         28        0.07       93.54
+                                  Kassa |         28        0.07       93.61
+                                   Slov |         28        0.07       93.68
+                                Paterno |         27        0.07       93.75
+                                      R |         27        0.07       93.81
+                                 Roseto |         27        0.07       93.88
+                                 Tarsia |         27        0.07       93.95
+                                  Canna |         26        0.06       94.01
+                                   Sora |         26        0.06       94.08
+                                 Speier |         26        0.06       94.14
+                                 Dolina |         25        0.06       94.20
+                                    S A |         25        0.06       94.26
+                            The Bahamas |         25        0.06       94.33
+                                    Csl |         24        0.06       94.39
+                                  Havre |         24        0.06       94.44
+                                   Kulm |         24        0.06       94.50
+                               Monaghan |         24        0.06       94.56
+                                Ansonia |         23        0.06       94.62
+                                      M |         23        0.06       94.68
+                                  Makow |         23        0.06       94.73
+                                  Pyrus |         23        0.06       94.79
+                                 S Amer |         23        0.06       94.85
+                                    W I |         23        0.06       94.90
+                                  Frank |         22        0.05       94.96
+                                Terseke |         22        0.05       95.01
+                                Gallina |         21        0.05       95.07
+                               Ottaiano |         21        0.05       95.12
+                                Sealand |         21        0.05       95.17
+                                      A |         20        0.05       95.22
+                                  Damas |         20        0.05       95.27
+                                Samsonn |         20        0.05       95.32
+                              St George |         20        0.05       95.37
+                                   Vita |         20        0.05       95.42
+                               Caltanis |         19        0.05       95.46
+                                Cotenza |         19        0.05       95.51
+                          Elisabethgrad |         19        0.05       95.56
+                                Erapani |         19        0.05       95.60
+                              Kischenew |         19        0.05       95.65
+                                  Leith |         19        0.05       95.70
+                             Schoondyke |         19        0.05       95.74
+                             So America |         19        0.05       95.79
+                          South America |         19        0.05       95.84
+                               West Ind |         19        0.05       95.89
+                                 Aleamo |         18        0.04       95.93
+                                  Ceora |         18        0.04       95.97
+                                Crapani |         18        0.04       96.02
+                               Ferenini |         18        0.04       96.06
+                               Kenouria |         18        0.04       96.11
+                                    Mir |         18        0.04       96.15
+                                   Mora |         18        0.04       96.20
+                              Rosenberg |         18        0.04       96.24
+                                 S Fili |         18        0.04       96.29
+                                 Stella |         18        0.04       96.33
+                                     Sw |         18        0.04       96.37
+                                 C Amer |         17        0.04       96.42
+                             Christiana |         17        0.04       96.46
+                                  Dabar |         17        0.04       96.50
+                                Piracus |         17        0.04       96.54
+                               Ponewesh |         17        0.04       96.58
+                                Sercara |         17        0.04       96.63
+                             Stmichaels |         17        0.04       96.67
+                                  Bacan |         16        0.04       96.71
+                               Borislaw |         16        0.04       96.75
+                               Campagua |         16        0.04       96.79
+                                     Gr |         16        0.04       96.83
+                                  Jessy |         16        0.04       96.87
+                                      L |         16        0.04       96.91
+                               Maryhill |         16        0.04       96.95
+                                  Mitan |         16        0.04       96.99
+                                   Naro |         16        0.04       97.02
+                                Sciacea |         16        0.04       97.06
+                                   Selz |         16        0.04       97.10
+                                Baghena |         15        0.04       97.14
+                               Calliano |         15        0.04       97.18
+                                  Gallo |         15        0.04       97.22
+                                  Gilly |         15        0.04       97.25
+                               Jawidcze |         15        0.04       97.29
+                                     La |         15        0.04       97.33
+                             Montebello |         15        0.04       97.36
+                                      W |         15        0.04       97.40
+                                  Basso |         14        0.03       97.43
+                               Burnbank |         14        0.03       97.47
+                                     By |         14        0.03       97.50
+                                Czerkas |         14        0.03       97.54
+                                 Foggio |         14        0.03       97.57
+                                 Grodns |         14        0.03       97.61
+                                Harpoot |         14        0.03       97.64
+                                     Ia |         14        0.03       97.68
+                               Johnston |         14        0.03       97.71
+                                 Kalish |         14        0.03       97.75
+                                  Kovna |         14        0.03       97.78
+                                     Rp |         14        0.03       97.82
+                        S Giuseppe Tato |         14        0.03       97.85
+                                Sarotow |         14        0.03       97.88
+                              Staranger |         14        0.03       97.92
+                                Tenanni |         14        0.03       97.95
+                                Tennini |         14        0.03       97.99
+                             Tripolitza |         14        0.03       98.02
+                                  Wilma |         14        0.03       98.06
+                                   Asia |         13        0.03       98.09
+                                   Cava |         13        0.03       98.12
+                          Christiansund |         13        0.03       98.15
+                           Elisawetgrad |         13        0.03       98.19
+                                 Frabia |         13        0.03       98.22
+                                 Hungar |         13        0.03       98.25
+                                 Jersey |         13        0.03       98.28
+                                   Kolb |         13        0.03       98.31
+                                 Korono |         13        0.03       98.35
+                                     Oe |         13        0.03       98.38
+                                   Osch |         13        0.03       98.41
+                                   Pico |         13        0.03       98.44
+                                Resicza |         13        0.03       98.48
+                                   Riva |         13        0.03       98.51
+                                   S Am |         13        0.03       98.54
+                          S Angelo Lomb |         13        0.03       98.57
+                                Solmona |         13        0.03       98.60
+                              Tavricien |         13        0.03       98.64
+                                  W Ind |         13        0.03       98.67
+                               Wilkomir |         13        0.03       98.70
+                               Alessand |         12        0.03       98.73
+                            Archipelago |         12        0.03       98.76
+                               Begrouth |         12        0.03       98.79
+                                Beresin |         12        0.03       98.82
+                               Boriphan |         12        0.03       98.85
+                              Delianova |         12        0.03       98.88
+                               Francais |         12        0.03       98.91
+                                    Fwi |         12        0.03       98.94
+                                 Glogon |         12        0.03       98.97
+                               Hastings |         12        0.03       99.00
+                           Marsiconnovo |         12        0.03       99.03
+                                Melissa |         12        0.03       99.06
+                                   Novi |         12        0.03       99.09
+                          Oliveto Citro |         12        0.03       99.12
+                              S America |         12        0.03       99.14
+                                   So A |         12        0.03       99.17
+                             Trebizonde |         12        0.03       99.20
+                                 Trenta |         12        0.03       99.23
+                                 Vietri |         12        0.03       99.26
+                              Witkowitz |         12        0.03       99.29
+                                     Al |         11        0.03       99.32
+                                   Alva |         11        0.03       99.35
+                              Bialostok |         11        0.03       99.37
+                         British Guiana |         11        0.03       99.40
+                                   C Am |         11        0.03       99.43
+                                 Canamo |         11        0.03       99.46
+                                  Capna |         11        0.03       99.48
+                          Capriati Volt |         11        0.03       99.51
+                                Cegiano |         11        0.03       99.54
+                                Galston |         11        0.03       99.57
+                                      H |         11        0.03       99.59
+                                     Ha |         11        0.03       99.62
+                              Halbstadt |         11        0.03       99.65
+                                  Isola |         11        0.03       99.67
+                               Kamenitz |         11        0.03       99.70
+                                 Koretz |         11        0.03       99.73
+                             Kronenthal |         11        0.03       99.76
+                               Montrone |         11        0.03       99.78
+                                  Motta |         11        0.03       99.81
+                                Newport |         11        0.03       99.84
+                                Niksich |         11        0.03       99.86
+                               Palerino |         11        0.03       99.89
+                             Petersburg |         11        0.03       99.92
+                              Porsgrund |         11        0.03       99.95
+                                 S Lupo |         11        0.03       99.97
+                                Shaptza |         11        0.03      100.00
+
+
+
+
+
 
 
 
@@ -973,3 +1264,11 @@ tab origin_city if countries == 1 & missing(origin_country), sort
 // Do the actual filling
 net from http://www.sealedenvelope.com/
 xfill origin_country, i(n_origin_city)
+
+
+
+
+
+
+
+
