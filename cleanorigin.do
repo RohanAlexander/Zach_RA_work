@@ -20,7 +20,7 @@ and an extension of the package could be to specify your time period of interest
 so not all being pushed to modern.)
 */
 
-// Running notes: Can run up to line 940 and it should all work. After that is working code or debris.
+// Running notes: Can run up to line 950 and it should all work. After that is working code or debris.
 
 //////////////////////// Initial set up and load data ////////////////////////
 clear all
@@ -28,11 +28,19 @@ clear all
 //set more off, permanently
 set more off
 
-use "/hdir/0/monicah/Desktop/EIbrothers18921924.dta"
+//use "/hdir/0/monicah/Desktop/EIbrothers18921924.dta"
+//cd "/hdir/0/monicah/Desktop/All"
 
-cd "/hdir/0/monicah/Desktop/All"
+use "/Users/rohanalexander/Desktop/EIbrothers18921924.dta"
+cd "/Users/rohanalexander/Desktop"
 
 //////////////////////// Start separating the cities and countries ////////////////////////
+// Get rid of the special character
+local variablelist `" "fullName" "origin" "ethnicity" "age" "impliedBirthYear" "arrivalDate" "ship" "port" "ID" "lname" "dateArrivedYear" "sex" "maritalStatus" "'
+foreach var of local variablelist {
+	replace `var' = subinstr(`var', char(160), "", .)
+}
+
 //Separate origin based on the first comma
 gen reversed = reverse(origin) 
 split reversed, generate(reversed) parse(,) limit(2)
@@ -51,10 +59,6 @@ rename origin_country_from_reversed origin_country
 //Deal with some horrible formatting inserted by the website
 // ssc install charlist
 // charlist origin_country
-replace origin_city = subinstr(origin_city, char(160), "", .)
-replace origin_country = subinstr(origin_country, char(160), "", .)
-//replace origin_city = subinstr(origin_city, "Ã", "", .)
-//replace origin_country = subinstr(origin_country, "Ã", "", .)
 replace origin_city = subinstr(origin_city, ".", "", .)
 replace origin_city = subinstr(origin_city, "'", " ", .)
 replace origin_city = subinstr(origin_city, ";", " ", .)
@@ -68,7 +72,7 @@ replace origin = trim(origin)
 replace ethnicity = strproper(ethnicity)
 
 // Remove duplicates
-replace impliedBirthYear = "Â 1889-1890" if impliedBirthYear=="Â 1?89-1890"
+replace impliedBirthYear = "1889-1890" if impliedBirthYear=="1?89-1890"
 //duplicates report
 //duplicates list
 duplicates drop
@@ -110,6 +114,18 @@ merge 1:1 ID using only_four
 drop _merge
 // Fourth, clean up
 drop number_of_ethnicities tag counter_by_ID
+rm only_two.dta
+rm only_three.dta
+rm only_four.dta
+
+
+// Fix the IDs COME BACK HERE
+//http://www.jewishgen.org/databases/EIDB/ellisgold.html
+//destring ID, replace
+
+//charlist ID
+
+//l fullName if strpos(ID, "?")
 
 //////////////////////// Typos in the cities names ////////////////////////
 //Clean some typos in the cities names
@@ -193,25 +209,6 @@ drop origin_city_tmp
 //////////////////////// Fix remaining messy countries (some of these are more than just typos - possible errors introduced here)
 
 // The cities of all these countries need to be checked before going through with the change; tab origin_city if (origin_country == "COUNTRY"), sort
-// Decide what to do with 'Russ' or 'S H S' or 'Wolyn' or 'Kiew'. Maybe add a flag or something to signal Zach to look into further then get rid of them in the table so they stop coming up.
-replace origin_country = "Albania" if (origin_country == "Albany") ///
-	| (origin_country == "Albanese") | (origin_country == "Albany") 
-replace origin_country = "Argentina" if (origin_country == "Argentine") ///
-	| (origin_country == "Angentina") | (origin_country == "Arg") ///
-	| (origin_country == "ArgRep") | (origin_country == "ArgRepSoAm") ///
-	| (origin_country == "ArgRepSoAmer") | (origin_country == "ArgRepublic") ///
-	| (origin_country == "Argenetine") | (origin_country == "Argent") ///
-	| (origin_country == "ArgentinaSoAm") | (origin_country == "ArgentineRep") ///
-	| (origin_country == "Argentinia") | (origin_country == "Argentyna") ///
-	| (origin_country == "Argt") | (origin_country == "Aurgentina") ///
-	| (origin_country == "RepArg") | (origin_country == "RepArgSoAm") ///
-	| (origin_country == "Arg Rep") | (origin_country == "Rep Arg")
-replace origin_country = "Armania" if (origin_country == "Armeny") 
-replace origin_country = "Austria" if (origin_country == "Asutria") ///
-	| (origin_country=="Austrial") | (origin_country=="Austrian") ///
-	| (origin_country=="Austriaa") | (origin_country=="Austrian") 
-replace origin_country = "Australia" if (origin_country == "Aus") ///
-	| (origin_country == "Aust") 
 replace origin_country = "Belgium" if (origin_country == "Belg") ///
 	| (origin_country=="Belguim")
 replace origin_country = "Belarus" if (origin_country == "Minsk") ///
@@ -219,7 +216,6 @@ replace origin_country = "Belarus" if (origin_country == "Minsk") ///
 	| (origin_country == "Witebsk")	| (origin_country == "Mohilew") ///
 	| (origin_country == "Pinsk")	| (origin_country == "Pinsk R") ///
 	| (origin_country == "Pinsk Region")	| (origin_country == "Mohilew") 
-// Should Bermuda be a country?
 replace origin_country = "Bermuda" if (origin_country == "Bda")
 replace origin_country = "Bosnia and Herzegovina" if (origin_country == "Herzegovina")
 replace origin_country = "Brazil" if (origin_country == "Brasil")
@@ -235,7 +231,6 @@ replace origin_country = "Croatia" if (origin_country == "Dalmatia") ///
 	| (origin_country == "Slavonia") | (origin_country == "Slavonia") ///
 	| (origin_country == "Croatian") | (origin_country == "Slavonia")	
 replace origin_country = "Curacao" if (origin_country == "Dwi")
-// Reassemble the Czech Republic - IS THIS APPROPRIATE???
 replace origin_country = "Czech Republic" if (origin_country == "Bohemia") ///
 	| (origin_country == "Moravia") | (origin_country == "Cz Slov") ///
 	| (origin_country == "Czechoslovakia") | (origin_country == "Cz Sl") ///
@@ -301,50 +296,6 @@ replace origin_country = "Hungary" if (origin_country == "Hung") ///
 replace origin_country = "Ireland" if (origin_country == "Iireland") ///
 	| (origin_country == "Co Kerry") | (origin_country == "Ire") ///
 	| (origin_country == "Co Cork") | (origin_country == "Cork")
-// Reconstruct Italy from the Italian states
-replace origin_country = "Italy" if (origin_country == "Palermo") ///
-	| (origin_country == "Caserta") | (origin_country == "Salerno") ///
-	| (origin_country == "Cosenza") | (origin_country == "Sicily") ///
-	| (origin_country == "Messina") | (origin_country == "Avellino") ///
-	| (origin_country == "Bari") | (origin_country == "Girgenti") ///
-	| (origin_country == "Trapani") | (origin_country == "Napoli") ///
-	| (origin_country == "Catanzaro") | (origin_country == "Potenza") ///
-	| (origin_country == "Roma") | (origin_country == "Catania") ///
-	| (origin_country == "Aquila") | (origin_country == "Siracusa") ///
-	| (origin_country == "Benevento") | (origin_country == "Campobasso") ///
-	| (origin_country == "Chieti") | (origin_country == "Foggia") ///
-	| (origin_country == "Lucca") | (origin_country == "Caltanissetta") ///
-	| (origin_country == "Genova") | (origin_country == "Udine") ///
-	| (origin_country == "Teramo") | (origin_country == "Naples") ///
-	| (origin_country == "Pesaro") | (origin_country == "Reggio C") ///
-	| (origin_country == "Torino") | (origin_country == "Reggio") ///
-	| (origin_country == "Treviso") | (origin_country == "Vicenza") ///
-	| (origin_country == "Alessandria") | (origin_country == "Aguila") ///
-	| (origin_country == "Ancona") | (origin_country == "Novara") ///
-	| (origin_country == "Perugia") | (origin_country == "Parma") ///
-	| (origin_country == "South Sicily") | (origin_country == "Sicily") ///
-	| (origin_country == "Calabria") | (origin_country == "Milano") ///
-	| (origin_country == "Reggio Cal") | (origin_country == "Firenze") ///
-	| (origin_country == "Belluno") | (origin_country == "Caltanisetta") ///
-	| (origin_country == "Pisa") | (origin_country == "Pavia") ///
-	| (origin_country == "C Basso") | (origin_country == "Lecce") ///
-	| (origin_country == "Italian") | (origin_country == "South Italy") ///
-	| (origin_country == "Itlay") | (origin_country == "Modena") ///
-	| (origin_country == "Bologna") | (origin_country == "Verona") ///
-	| (origin_country == "Trento") | (origin_country == "Piacenza") ///
-	| (origin_country == "Potensa") | (origin_country == "Brescia") ///
-	| (origin_country == "Como") | (origin_country == "Ascoli") ///
-	| (origin_country == "Ita") | (origin_country == "Bergamo") ///
-	| (origin_country == "Forli") | (origin_country == "Cuneo") ///
-	| (origin_country == "Rome") | (origin_country == "Cosensa") ///
-	| (origin_country == "Rovigo") | (origin_country == "Genoa") ///
-	| (origin_country == "Reggiol") | (origin_country == "Cbasso") ///
-	| (origin_country == "Molise") | (origin_country == "Sondrio") ///
-	| (origin_country == "Ascoli P") | (origin_country == "Ital") ///
-	| (origin_country == "So Italy") | (origin_country == "Caltaniss") ///
-	| (origin_country == "Salermo") | (origin_country == "Gergenti") ///
-	| (origin_country == "Agusta") | (origin_country == "Arezzo") ///
-	| (origin_country == "Arellino") | (origin_country == "Arezzo")
 replace origin_country = "Italy" if (origin_country == "Italy Italy") ///
 	| (origin_country == "It") | (origin_country == "Italia")
 replace origin_country = "Jamaica" if (origin_country == "Ja") ///
@@ -427,49 +378,15 @@ replace origin_country = "Turkey" if (origin_country == "Turkey A") ///
 replace origin_country = "Ukraine" if (origin_country == "Cherson") ///
 	| (origin_country == "Podol") | (origin_country == "Poltawa") ///
 	| (origin_country == "Ukrainia") | (origin_country == "Kiev")
-// Change country of origin from various US states to United States
-replace origin_country = "United States" if (origin_country == "Ny") ///
-	| (origin_country == "Pa") | (origin_country == "Ill") ///
-	| (origin_country == "Mass") | (origin_country == "Nj") ///
-	| (origin_country == "N Y") | (origin_country == "Ohio") ///
-	| (origin_country == "New York") | (origin_country == "Conn") ///
-	| (origin_country == "Mich") | (origin_country == "Minn") ///
-	| (origin_country == "Wisc") | (origin_country == "N J") ///
-	| (origin_country == "Wash") | (origin_country == "Cal") ///
-	| (origin_country == "Ind") | (origin_country == "Iowa")	
-replace origin_country = "United States" if (origin_country == "USA (Casamicclole Ischia") ///
-	| (origin_country == "USA Or Castellanimare Golfo") | (origin_country == "USA Or Santiago de Cuba") ///
-	| (origin_country == "U S A") | (origin_country == "US") ///
-	| (origin_country == "U S") | (origin_country == "USA Mass") ///
-	| (origin_country == "United States") | (origin_country == "United States Of America") ///
-	| (origin_country == "America") | (origin_country == "U.S.A. (Lenola") ///
-	| (origin_country == "U S Of A") | (origin_country == "NY USA  Jettenback") ///
-	| (origin_country == "NY USA  Jettenback") | (origin_country == "Usa") ///
-	| (origin_country == "Us") | (origin_country == "USA") ///
-	| (origin_country == "Ny Usa") | (origin_country == "Mont") ///
-	| (origin_country == "Col") | (origin_country == "St Thomas") ///
-	| (origin_country == "Mo") | (origin_country == "Texas") ///
-	| (origin_country == "Il") | (origin_country == "W Va")	///
-	| (origin_country == "Ills") | (origin_country == "O")	///
-	| (origin_country == "Pa Usa") | (origin_country == "Mass Usa")	///
-	| (origin_country == "Ri") | (origin_country == "St Croix") ///
-	| (origin_country == "Illinois") | (origin_country == "Nebr") ///
-	| (origin_country == "Ore") | (origin_country == "Michigan") ///
-	| (origin_country == "Pennsylvania") | (origin_country == "New Jersey") ///
-	| (origin_country == "Oh") | (origin_country == "Ill Usa") ///
-	| (origin_country == "Indiana") | (origin_country == "Wis") ///	
-	| (origin_country == "Brooklyn") | (origin_country == "Ca") ///
-	| (origin_country == "Calif") | (origin_country == "California") ///
-	| (origin_country == "Nj Usa") | (origin_country == "Utah") ///
-	| (origin_country == "Vi") | (origin_country == "Wyo") ///
-	| (origin_country == "Nh") | (origin_country == "Ma") ///
-	| (origin_country == "Mich Usa") | (origin_country == "Minnesota") ///
-	| (origin_country == "Montana") | (origin_country == "Nyork")
 replace origin_country = "Venezuela" if (origin_country == "Venez")
 replace origin_country = "Wales" if (origin_country=="Swales")
 
 
 // Do the same as above, but use loops and locals instead - eh Statan.
+local Albania `" "Albany" "Albanese" "Albany" "'
+foreach town of local Albania {
+	replace origin_country = "Albania" if (origin_country == "`town'")
+}
 
 local Algeria `" "Konstantin" "'
 foreach town of local Algeria {
@@ -486,26 +403,35 @@ foreach town of local Argentina {
 	quietly replace origin_country = "Argentina" if (origin_country == "`town'")
 }
 
-local Armenia `" "Armania" "'
+local Argentina `" "Argentine" "Angentina" "Arg" "ArgRep" "ArgRepSoAm" "ArgRepSoAmer" "ArgRepublic" "Argenetine" "Argent" "ArgentinaSoAm" "ArgentineRep" "Argentinia" "Argentyna" "Argt" "Aurgentina" "RepArg" "RepArgSoAm" "Arg Rep" "Rep Arg" "'
+foreach town of local Argentina {
+	 replace origin_country = "Argentina" if (origin_country == "`town'")
+}
+
+local Armenia `" "Armania" "Armeny" "'
 foreach town of local Armenia {
 	quietly replace origin_country = "Armenia" if (origin_country == "`town'")
 }
 
-local Australia `" "Ballina" "Bronte" "Sydney" "'
+local Australia `" "Ballina" "Bronte" "Sydney" "Aus" "Aust" "'
 foreach town of local Australia {
 	quietly replace origin_country = "Australia" if (origin_country == "`town'")
 }
 
-local Austria `" "Graz" "Tirol" "Berndorf" "L Austria" "Rausaitz" "Freudenthal" "Karnten" "Tyrol" "Styria" "Vienna" "Wien" "'
+local Austria `" "Boriphan" "Borislaw" "Austr" "Bukowina" "Graz" "Tirol" "Berndorf" "L Austria" "Rausaitz" "Freudenthal" "Karnten" "Tyrol" "Styria" "Vienna" "Wien" "'
 foreach town of local Austria {
-	quietly replace origin_country = "Austria" if (origin_country == "`town'")
+	replace origin_country = "Austria" if (origin_country == "`town'")
+}
+
+local Austria `" "Asutria" "Austrial" "Austrian" "Austriaa" "Austrian" "'
+foreach town of local Austria {
+	replace origin_country = "Austria" if (origin_country == "`town'")
 }
 
 local Bahrain `" "Ali" "'
 foreach town of local Bahrain {
 	quietly replace origin_country = "Bahrain" if (origin_country == "`town'")
 }
-
 
 local Belarus `" "Bobruisk" "Sluck" "Brest Lit" "Sluzk" "Antopol" "Kobrin" "Beresina" "Grodna" "Mogilew" "Slutzk" "Slonim" "Homel" "'
 foreach town of local Belarus {
@@ -525,11 +451,6 @@ foreach town of local BosniaAndHerzegovina {
 local Brazil `" "Rio" "Buenos Ayres" "Sao Paulo" "S Paulo" "B Aires" "Buenos Aires" "Rio De Janeiro" "Bonito" "Rio De Janerio" "San Paulo" "Rio De Janiero" "'
 foreach town of local Brazil {
 	quietly replace origin_country = "Brazil" if (origin_country == "`town'")
-}
-
-local BritishGuiana `" "British Guiana" "'
-foreach town of local BritishGuiana {
-	quietly replace origin_country = "British Guiana" if (origin_country == "`town'")
 }
 
 local Bulgaria `" "Kamenetz" "'
@@ -552,7 +473,7 @@ foreach town of local Colombia {
 	quietly replace origin_country = "Colombia" if (origin_country == "`town'")
 }
 
-local Croatia `" "Istria" "Bunic" "Dalmacia" "Lissa" "Ogulin" "Castel S Giorgio" "Mrkopalj" "Fuzine" "'
+local Croatia `" "Novi" "Istria" "Bunic" "Dalmacia" "Lissa" "Ogulin" "Castel S Giorgio" "Mrkopalj" "Fuzine" "'
 foreach town of local Croatia {
 	quietly replace origin_country = "Croatia" if (origin_country == "`town'")
 }
@@ -567,12 +488,12 @@ foreach town of local Cyprus {
 	quietly replace origin_country = "Cyprus" if (origin_country == "`town'")
 }
 
-local Czechoslovakia `" "Tchecoslovakia" "T Slov" "T Slovak" "Tcheco-Slovakie" "Tcheco-Slovaky" "Teplitz" "Pisek" "Krasna" "Krasno" "Pecky" "Plzen" "Radomysl" "Ledenice" "Prag" "'
+local Czechoslovakia `" "Csl" "Czech Republic" "Tchecoslovakia" "T Slov" "T Slovak" "Tcheco-Slovakie" "Tcheco-Slovaky" "Teplitz" "Pisek" "Krasna" "Krasno" "Pecky" "Plzen" "Radomysl" "Ledenice" "Prag" "'
 foreach town of local Czechoslovakia {
-	quietly replace origin_country = "Czech Republic" if (origin_country == "`town'")
+	replace origin_country = "Czechoslovakia" if (origin_country == "`town'")
 }
 
-local Denmark `" "Aalborg" "Hjorring" "Funen" "Bornholm" "Aadalen" "Aarhus" "Danemark" "Esbjerg" "Christiania" "Copenhagen" "'
+local Denmark `" "Sealand" "Jutland" "Aalborg" "Hjorring" "Funen" "Bornholm" "Aadalen" "Aarhus" "Danemark" "Esbjerg" "Christiania" "Copenhagen" "'
 foreach town of local Denmark {
 	quietly replace origin_country = "Denmark" if (origin_country == "`town'")
 }
@@ -592,9 +513,9 @@ foreach town of local ElSalvador {
 	quietly replace origin_country = "El Salvador" if (origin_country == "`town'")
 }
 
-local England `" "Gibraltar" "Derby" "Oldham" "Lpool" "L'Pool" "Curland" "Bristol" "Motherwell" "Bradford" "Durham" "Perth" "Newcastle" "Coatbridge" "Bolton" "Nottingham" "Hull" "Leeds" "Cornwall" "Wigan" "London England" "Southampton" "Barrow" "Norfolk" "Chesterfield" "Sussex" "Surrey" "Lancaster" "Tunstall" "Liverpool" "Manchester" "Liverpool/England" "Plymouth" "Hirst" "Leigh" "Burnley" "Sunderland" "Walsall" "Grimsby" "Preston" "Devon" "Norwich" "Acklington" "Stoke" "Burslem" "York" "Bacup" "Blackburn" "Sala" "Stafford" "Newcastle On Tyne" "Bootle" "Brighton" "Kidderminster" "Leicester" "Portsmouth" "Tipton" "Dover" "Emgland" "Ilford" "Kendal" "Rochdale" "Workington" "Ashington" "Barnsley" "Gateshead" "Shipley" "Englad" "'
+local England `" "Hastings" "Dudley" "Gibraltar" "Derby" "Oldham" "Lpool" "L'Pool" "Curland" "Bristol" "Motherwell" "Bradford" "Durham" "Perth" "Newcastle" "Coatbridge" "Bolton" "Nottingham" "Hull" "Leeds" "Cornwall" "Wigan" "London England" "Southampton" "Barrow" "Norfolk" "Chesterfield" "Sussex" "Surrey" "Lancaster" "Tunstall" "Liverpool" "Manchester" "Liverpool/England" "Plymouth" "Hirst" "Leigh" "Burnley" "Sunderland" "Walsall" "Grimsby" "Preston" "Devon" "Norwich" "Acklington" "Stoke" "Burslem" "York" "Bacup" "Blackburn" "Sala" "Stafford" "Newcastle On Tyne" "Bootle" "Brighton" "Kidderminster" "Leicester" "Portsmouth" "Tipton" "Dover" "Emgland" "Ilford" "Kendal" "Rochdale" "Workington" "Ashington" "Barnsley" "Gateshead" "Shipley" "Englad" "'
 foreach town of local England {
-	quietly replace origin_country = "England" if (origin_country == "`town'")
+	replace origin_country = "England" if (origin_country == "`town'")
 }
 
 local Estonia `" "Esthonia" "'
@@ -607,7 +528,7 @@ foreach town of local Finland {
 	quietly replace origin_country = "Finland" if (origin_country == "`town'")
 }
 
-local France `" "Corbara" "Gran" "French" "Elsass" "Villetta" "Pire" "Lussin" "Massa C" "Arcis" "Lyon" "Montigny" "Avion" "Taverna" "Auzi" "Decazeville" "Piana" "Tassy" "Belfort" "Corse" "Gard" "Marchienne" "Lille" "St Medard" "Taurien" "Strassburg" "Besseges" "Lievin" "Brest" "Marseilles" "Marseille" "Roubaix" "Paris" "Martinique" "'
+local France `" "Francais" "Fwi" "Lens" "Corbara" "Gran" "French" "Elsass" "Villetta" "Pire" "Lussin" "Massa C" "Arcis" "Lyon" "Montigny" "Avion" "Taverna" "Auzi" "Decazeville" "Piana" "Tassy" "Belfort" "Corse" "Gard" "Marchienne" "Lille" "St Medard" "Taurien" "Strassburg" "Besseges" "Lievin" "Brest" "Marseilles" "Marseille" "Roubaix" "Paris" "Martinique" "'
 foreach town of local France {
 	quietly replace origin_country = "France" if (origin_country == "`town'")
 }
@@ -622,9 +543,19 @@ foreach town of local Germany {
 	quietly replace origin_country = "Germany" if (origin_country == "`town'")
 }
 
-local Greece `" "Sparte" "Argos" "Tripolis" "Pireo" "Piraeus" "Piree" "Sparta" "Athens" "Xania" "Piraens" "Icaria" "Smyrna" "Castoria" "Grecia" "Crete" "Mantinia" "Grevena" "Laconia" "Corinthia" "Patras" "Chios" "Epire" "Florina" "Sparti" "Corinth" "Corinthe" "Le Piree" "Leonidion" "Creta" "Elgin" "Megalopolis" "Syra" "'
+local Germany `" "Neudorf" "'
+foreach town of local Germany {
+	replace origin_country = "Germany" if (origin_country == "`town'")
+}
+
+local Greece `" "Tripolitza" "Archipelago" "Piracus" "Kenouria" "Pirie" "Pyrus" "Sparte" "Argos" "Tripolis" "Pireo" "Piraeus" "Piree" "Sparta" "Athens" "Xania" "Piraens" "Icaria" "Smyrna" "Castoria" "Grecia" "Crete" "Mantinia" "Grevena" "Laconia" "Corinthia" "Patras" "Chios" "Epire" "Florina" "Sparti" "Corinth" "Corinthe" "Le Piree" "Leonidion" "Creta" "Elgin" "Megalopolis" "Syra" "'
 foreach town of local Greece {
-	quietly replace origin_country = "Greece" if (origin_country == "`town'")
+	replace origin_country = "Greece" if (origin_country == "`town'")
+}
+
+local Guyana `" "British Guiana" "'
+foreach town of local Guyana {
+	replace origin_country = "Guyana" if (origin_country == "`town'")
 }
 
 local Haiti `" "Port Au Prince" "Hayti" "'
@@ -632,14 +563,14 @@ foreach town of local Haiti {
 	quietly replace origin_country = "Haiti" if (origin_country == "`town'")
 }
 
-local Hungary `" "Ungarn" "Budapest" "'
+local Hungary `" "Hungar" "Ungarn" "Budapest" "'
 foreach town of local Hungary {
 	quietly replace origin_country = "Hungary" if (origin_country == "`town'")
 }
 
-local Ireland `" "Castlerea" "Galway" "Kilrush" "Clonmel" "Listowel" "Cavan" "Dingle" "Drogheda" "Kerry" "Tralee" "Tipperary" "Waterford" "Ballinrobe" "Killarney" "Thurles" "Leitrim" "Ballyjamesduff" "Co Galway" "Kenmare" "Killaloe" "Swinford" "Bantry" "Castleisland" "Kildare" "Longford" "Sligo" "Donegal" "Limerick" "Dublin" "'
+local Ireland `" "Monaghan" "Castlerea" "Galway" "Kilrush" "Clonmel" "Listowel" "Cavan" "Dingle" "Drogheda" "Kerry" "Tralee" "Tipperary" "Waterford" "Ballinrobe" "Killarney" "Thurles" "Leitrim" "Ballyjamesduff" "Co Galway" "Kenmare" "Killaloe" "Swinford" "Bantry" "Castleisland" "Kildare" "Longford" "Sligo" "Donegal" "Limerick" "Dublin" "Tyrone" "'
 foreach town of local Ireland {
-	quietly replace origin_country = "Ireland" if (origin_country == "`town'")
+	replace origin_country = "Ireland" if (origin_country == "`town'")
 }
 
 local Israel `" "Jaffa" "Jerusalem" "'
@@ -652,12 +583,27 @@ foreach town of local Italy {
 	quietly replace origin_country = "Italy" if (origin_country == "`town'")
 }
 
+local Italy `" "Palermo" "Caserta" "Salerno" "Cosenza" "Sicily" "Messina" "Avellino" "Bari" "Girgenti" "Trapani" "Napoli" "Catanzaro" "Potenza" "Roma" "Catania" "Aquila" "Siracusa" "Benevento" "Campobasso" "Chieti" "Foggia" "Lucca" "Caltanissetta" "Genova" "Udine" "Teramo" "Naples" "Pesaro" "Reggio C" "Torino" "Reggio" "Treviso" "Vicenza" "Alessandria" "Aguila" "Ancona" "Novara" "Perugia" "Parma" "South Sicily" "Sicily" "Calabria" "Milano" "Reggio Cal" "Firenze" "Belluno" "Caltanisetta" "Pisa" "Pavia" "C Basso" "Lecce" "Italian" "South Italy" "Itlay" "Modena" "Bologna" "Verona" "Trento" "Piacenza" "Potensa" "Brescia" "Como" "Ascoli" "Ita" "Bergamo" "Forli" "Cuneo" "Rome" "Cosensa" "Rovigo" "Genoa" "Reggiol" "Cbasso" "Molise" "Sondrio" "Ascoli P" "Ital" "So Italy" "Caltaniss" "Salermo" "Gergenti" "Agusta" "Arezzo" "Arellino" "Arezzo" "'
+foreach town of local Italy {
+	quietly replace origin_country = "Italy" if (origin_country == "`town'")
+}
+
+local Italy `" "Palerino" "S Lupo" "Montrone" "Motta" "Isola" "Capriati Volt" "Cegiano" "Canamo" "Capna" "Bella" "Trenta" "Vietri" "Oliveto Citro" "Melissa" "Marsiconnovo" "Delianova" "Alessand" "Basso" "Foggio" "Tenanni" "Tennini" "Cava" "Frabia" "Riva" "Solmona" "Aleamo" "Ceora" "Crapani" "S Fili" "Stella" "Ferenini" "Campagua"  "Sercara"  "Naro" "Sciacea" "Caltanis" "Cotenza" "Erapani" "Montebello" "Baghena" "Gallo" "Lago" "Maida" "Rodi" "Roseto" "Canna" "Rose"  "Gallina" "Vita" "Ansonia" "Ottaiano" "Sora" "Calliano" "Tarsia" "Paterno" "Monteleone" "Potenzo" "Valledolino" "Prata" "Tusa" "Contessa" "Laurenzano" "Parenti" "Bancina" "Alia" "Patti" "S Giuseppe Tato" "S Angelo Lomb" "'
+foreach town of local Italy {
+	replace origin_country = "Italy" if (origin_country == "`town'")
+}
+
+local Iran `" "Persia" "'
+foreach town of local Iran {
+	replace origin_country = "Iran" if (origin_country == "`town'")
+}
+
 local Jamaica `" "Kingston" "'
 foreach town of local Jamaica {
 	quietly replace origin_country = "Jamaica" if (origin_country == "`town'")
 }
 
-local Latvia `" "Dwinsk" "Libau" "Mitau" "'
+local Latvia `" "Mitan" "Dwinsk" "Libau" "Mitau" "'
 foreach town of local Latvia {
 	quietly replace origin_country = "Latvia" if (origin_country == "`town'")
 }
@@ -682,6 +628,11 @@ foreach town of local Luxembourg {
 	quietly replace origin_country = "Luxembourg" if (origin_country == "`town'")
 }
 
+local Malta `" "Oe" "'
+foreach town of local Malta {
+	replace origin_country = "Malta" if (origin_country == "`town'")
+}
+
 local Mexico `" "Vera Cruz" "Merida" "Mexico City" "'
 foreach town of local Mexico {
 	quietly replace origin_country = "Mexico" if (origin_country == "`town'")
@@ -702,9 +653,9 @@ foreach town of local Morocco {
 	quietly replace origin_country = "Morocco" if (origin_country == "`town'")
 }
 
-local Netherlands `" "Haarlem" "Beerta" "Krabbendyke" "Holand" "Middelburg" "Utrecht" "Apeldoorn" "Ede" "Ulrum" "Bolsward" "Groede" "Wolvega" "Elburg" "Nes" "Oostwold" "Winschoten" "Delft" "Goes" "Harlinger" "Helder" "N Beerta" "Ouddorp" "Almelo" "Uden" "Groningen" "Amsterdam" "The Hague" "Rotterdam" "'
+local Netherlands `" "Osch" "Schoondyke"  "Terseke" "Haarlem" "Beerta" "Krabbendyke" "Holand" "Middelburg" "Utrecht" "Apeldoorn" "Ede" "Ulrum" "Bolsward" "Groede" "Wolvega" "Elburg" "Nes" "Oostwold" "Winschoten" "Delft" "Goes" "Harlinger" "Helder" "N Beerta" "Ouddorp" "Almelo" "Uden" "Groningen" "Amsterdam" "The Hague" "Rotterdam" "A'Dam" "'
 foreach town of local Netherlands {
-	quietly replace origin_country = "Netherlands" if (origin_country == "`town'")
+	replace origin_country = "Netherlands" if (origin_country == "`town'")
 }
 
 local NewZealand `" "Queenstown" "'
@@ -717,22 +668,27 @@ foreach town of local NorthernIreland {
 	quietly replace origin_country = "Northern Ireland" if (origin_country == "`town'")
 }
 
-local Norway `" "Fredriksstad" "Moss" "Sandefjord" "Gjovik" "Fredrikstad" "Aalesund" "Kragero" "Telemarken" "Eidsberg" "Flekkefjord" "Hadeland" "Stavange" "Elverum" "Hangesund" "Horten" "Oksnes" "Biri" "Drobak" "Risor" "Lillesand" "Tonsberg" "Drontheim" "Trondhjem" "Grimstad" "Larvik" "Farsund" "Mandal" "Kristiansund" "Drammen" "Skien" "Throndhjem" "Christiansand" "Kristiania" "Bergen" "Stavanger" "Arendal" "'
+local Norway `" "Porsgrund" "Chrsand" "Staranger" "Christiansund" "Christiana"  "Fredriksstad" "Moss" "Sandefjord" "Gjovik" "Fredrikstad" "Aalesund" "Kragero" "Telemarken" "Eidsberg" "Flekkefjord" "Hadeland" "Stavange" "Elverum" "Hangesund" "Horten" "Oksnes" "Biri" "Drobak" "Risor" "Lillesand" "Tonsberg" "Drontheim" "Trondhjem" "Grimstad" "Larvik" "Farsund" "Mandal" "Kristiansund" "Drammen" "Skien" "Throndhjem" "Christiansand" "Kristiania" "Bergen" "Stavanger" "Arendal" "'
 foreach town of local Norway {
-	quietly replace origin_country = "Norway" if (origin_country == "`town'")
+	replace origin_country = "Norway" if (origin_country == "`town'")
 }
 
-local Panama `" "Colon" "'
+local Panama `" "Rp" "Colon" "'
 foreach town of local Panama {
 	quietly replace origin_country = "Panama" if (origin_country == "`town'")
 }
 
-local Poland `" "Kozlow" "Ostrow" "Konin" "Bielostok" "Gnesen" "Gorlice" "Jaslo" "Mielec" "Ostrowo" "Bielsk" "Janowo" "Polish" "Czernigow" "Sanok" "Krakow" "Lipno" "Radom" "Ulanow" "Brzozow" "Dabrowa" "Plotzk" "Polanka" "Przemysl" "Dukla" "Suwolk" "Bobrka" "Dembica" "Dombrowo" "Gron" "Kolno" "Tarnobrzeg" "Janowitz" "Kolbuszow" "Kolbuszowa" "Serby" "Sokolow" "Gliniany" "Godowa" "Kotowka" "Laszki" "Nowogrod" "Ostrolenka" "Przemyol" "Salino" "Sieniawa" "Stettin" "Mlawa" "Bialystock" "Tarnow" "Krakau" "Lublin" "Suwalki" "Lodz" "Bialystok" "Warsaw" "Warschaw" "Warshaw" "Warshau" "Warschan" "'
+local Poland `" "Pol" "Kozlow" "Ostrow" "Konin" "Bielostok" "Gnesen" "Gorlice" "Jaslo" "Mielec" "Ostrowo" "Bielsk" "Janowo" "Polish" "Czernigow" "Sanok" "Krakow" "Lipno" "Radom" "Ulanow" "Brzozow" "Dabrowa" "Plotzk" "Polanka" "Przemysl" "Dukla" "Suwolk" "Bobrka" "Dembica" "Dombrowo" "Gron" "Kolno" "Tarnobrzeg" "Janowitz" "Kolbuszow" "Kolbuszowa" "Serby" "Sokolow" "Gliniany" "Godowa" "Kotowka" "Laszki" "Nowogrod" "Ostrolenka" "Przemyol" "Salino" "Sieniawa" "Stettin" "Mlawa" "Bialystock" "Tarnow" "Krakau" "Lublin" "Suwalki" "Lodz" "Bialystok" "Warsaw" "Warschaw" "Warshaw" "Warshau" "Warschan" "'
 foreach town of local Poland {
 	quietly replace origin_country = "Poland" if (origin_country == "`town'")
 }
 
-local Portugal `" "Alvito" "Fayal" "Funchal" "'
+local Poland `" "Pos" "'
+foreach town of local Poland {
+	replace origin_country = "Poland" if (origin_country == "`town'")
+}
+
+local Portugal `" "Stmichaels" "St George" "Alvito" "Fayal" "Funchal" "'
 foreach town of local Portugal {
 	quietly replace origin_country = "Portugal" if (origin_country == "`town'")
 }
@@ -747,14 +703,19 @@ foreach town of local PuertoRico {
 	quietly replace origin_country = "Puerto Rico" if (origin_country == "`town'")
 }
 
-local Romania `" "Galati" "Bucharest" "Piatra" "Dorohoi" "Arad" "Roamania" "Craova" "Iassy" "Rumanian" "Focsani" "Bukarest" "Bacau" "Botosani" "Galatz" "Berlad" "Braila" "Jassy" "Bucarest" "'
+local Romania `" "Jessy" "Bacan" "Galati" "Bucharest" "Piatra" "Dorohoi" "Arad" "Roamania" "Craova" "Iassy" "Rumanian" "Focsani" "Bukarest" "Bacau" "Botosani" "Galatz" "Berlad" "Braila" "Jassy" "Bucarest" "'
 foreach town of local Romania {
-	quietly replace origin_country = "Romania" if (origin_country == "`town'")
+	replace origin_country = "Romania" if (origin_country == "`town'")
 }
 
 local Russia `" "Yassy" "Podolsk" "Rusjia" "Saratov" "Alexandrow" "Severin" "Jekaterinoslaw" "Ekaterinoslaw" "Rssia" "Rusfia" "'
 foreach town of local Russia {
 	quietly replace origin_country = "Russia" if (origin_country == "`town'")
+}
+
+local Russia `" "Petersburg"  "Kamenitz" "Koretz" "Halbstadt" "Bialostok" "Czerkas" "Kalish" "Kovna" "Sarotow" "Wilma" "Elisawetgrad" "Norka" "Russ" "'
+foreach town of local Russia {
+	replace origin_country = "Russia" if (origin_country == "`town'")
 }
 
 local Scotland `" "Shotts" "Dunfermline" "Baillieston" "Kilsyth" "Govan" "Stevenston" "Arbroath" "Rutherglen" "Elderslie" "Ggow" "Wishaw" "Kilmarnock" "Bellshill" "Edinbro" "Larkhall" "Greenock" "Edinburgh" "Paisley" "Aberdeen" "Dundee" "Birmingham" "Sheffield" "Morrone" "Cambuslang" "Carfin" "Dalry" "Ayr" "Craigneuk" "Inverness" "Kirkcaldy" "Stewarton" "Uddingston" "Helensburgh" "Holytown" "Saltcoats" "Stranraer" "Bathgate" "Dumbarton" "Dunoon" "Fraserburgh" "Linlithgow" "Shettleston" "Tayport" "Forfar" "Gourock" "Kelty" "Springburn" "'
@@ -812,9 +773,9 @@ foreach town of local Suriname {
 	quietly replace origin_country = "Suriname" if (origin_country == "`town'")
 }
 
-local Sweden `" "Bergsjo" "Gefle" "Gottenburg" "Motala" "Ragunda" "Vermland" "Gotland" "Gottenberg" "Orebro" "Sunne" "Yathenburg" "Pitea" "Swedenn" "Vasa" "Arvika" "Lund" "Norrkoping" "Gothenberg" "Helsingborg" "Goteborg" "Malmo" "Gothenburg" "Stockholm" "Swedem" "'
+local Sweden `" "Mora" "Bergsjo" "Gefle" "Gottenburg" "Motala" "Ragunda" "Vermland" "Gotland" "Gottenberg" "Orebro" "Sunne" "Yathenburg" "Pitea" "Swedenn" "Vasa" "Arvika" "Lund" "Norrkoping" "Gothenberg" "Helsingborg" "Goteborg" "Malmo" "Gothenburg" "Stockholm" "Swedem" "'
 foreach town of local Sweden {
-	quietly replace origin_country = "Sweden" if (origin_country == "`town'")
+	replace origin_country = "Sweden" if (origin_country == "`town'")
 }
 
 local Switzerland `" "Corino" "Switserland" "Switzerld" "Coritto" "Sessa" "Rorbach" "Ebnat" "St Gallen" "Campo" "Adlisweil" "Biel" "Bern" "Castelgrande" "Berne" "Basel" "Campofelice" "Zurich" "Switzland" "'
@@ -822,9 +783,14 @@ foreach town of local Switzerland {
 	quietly replace origin_country = "Switzerland" if (origin_country == "`town'")
 }
 
-local Syria `" "Aleppo" "Syria Ta" "Syria A" "Damascus" "'
+local Syria `" "Damas" "Aleppo" "Syria Ta" "Syria A" "Damascus" "'
 foreach town of local Syria {
 	quietly replace origin_country = "Syria" if (origin_country == "`town'")
+}
+
+local Syria `" "Begrouth" "Ta" "T A" "'
+foreach town of local Syria {
+	replace origin_country = "Syria" if (origin_country == "`town'")
 }
 
 local TheBahamas `" "Nassau" "'
@@ -842,19 +808,24 @@ foreach town of local Tunisia {
 	quietly replace origin_country = "Tunisia" if (origin_country == "`town'")
 }
 
-local Turkey `" "Alexandrette" "Bitlis" "Han" "Turchia" "Turkeuy" "Mersina" "Smyrne" "Samsoun" "Constantinople" "'
+local Turkey `" "Asia" "Alexandrette" "Bitlis" "Han" "Turchia" "Turkeuy" "Mersina" "Smyrne" "Samsoun" "Constantinople" "'
 foreach town of local Turkey {
 	quietly replace origin_country = "Turkey" if (origin_country == "`town'")
 }
 
-local Ukraine `" "Proskurow" "Husiatyn" "Rohatyn" "Uman" "Busk" "Podhajce" "Gorodok" "Ostrog" "Zitomir" "Fastow" "Horodenka" "Drohsbicz" "Kowel" "Tarutino" "Bilek" "Charkow" "Jezupol" "Klostitz" "Poltava" "Smela" "Ukrania" "Bolechow" "Boryslaw" "Rowne" "Sarata" "Bachmut" "Balta" "Sitomir" "Tschernembl" "Brzezany" "Buczacz" "Romny" "Skalat" "Smila" "Soroky" "Belz" "Sambor" "Stanislau" "Tarnopol" "Czernowitz" "Kieff" "Kolomea" "Brody" "Stryj" "Rowno" "Kiew" "Lemberg" "Riga" "Odessa" "'
+local Ukraine `" "Elisabethgrad" "Proskurow" "Husiatyn" "Rohatyn" "Uman" "Busk" "Podhajce" "Gorodok" "Ostrog" "Zitomir" "Fastow" "Horodenka" "Drohsbicz" "Kowel" "Tarutino" "Bilek" "Charkow" "Jezupol" "Klostitz" "Poltava" "Smela" "Ukrania" "Bolechow" "Boryslaw" "Rowne" "Sarata" "Bachmut" "Balta" "Sitomir" "Tschernembl" "Brzezany" "Buczacz" "Romny" "Skalat" "Smila" "Soroky" "Belz" "Sambor" "Stanislau" "Tarnopol" "Czernowitz" "Kieff" "Kolomea" "Brody" "Stryj" "Rowno" "Kiew" "Lemberg" "Riga" "Odessa" "'
 foreach town of local Ukraine {
-	quietly replace origin_country = "Ukraine" if (origin_country == "`town'")
+	replace origin_country = "Ukraine" if (origin_country == "`town'")
 }
 
-local USA `" "Chicago" "Claims Us Born" "Irvine" "New York City" "Amerika" "U S Born" "Filadelfia" "N York" "Hawaii" "Neb" "New York Usa" "Ny City" "Philadelphia" "Us Citizen" "San Jose" "Puerto Rico" "Us Born" "USA" "U S Citizen" "Ct" "Va" "'
+local USA `" "La" "Chicago" "Claims Us Born" "Irvine" "New York City" "Amerika" "U S Born" "Filadelfia" "N York" "Hawaii" "Neb" "New York Usa" "Ny City" "Philadelphia" "Us Citizen" "San Jose" "Puerto Rico" "Us Born" "USA" "U S Citizen" "Ct" "Va" "'
 foreach town of local USA {
-	quietly replace origin_country = "United States" if (origin_country == "`town'")
+	replace origin_country = "United States" if (origin_country == "`town'")
+}
+
+local USA `" "Ia" "Ny" "Pa" "Ill" "Mass" "Nj" "N Y" "Ohio" "New York" "Conn" "Mich" "Minn" "Wisc" "N J" "Wash" "Cal" "Ind" "Iowa" "USA (Casamicclole Ischia" "USA Or Castellanimare Golfo" "USA Or Santiago de Cuba" "U S A" "US" "U S" "USA Mass" "United States" "United States Of America" "America" "U.S.A. (Lenola" "U S Of A" "NY USA  Jettenback" "NY USA  Jettenback" "Usa" "Us" "USA" "Ny Usa" "Mont" "Col" "St Thomas" "Mo" "Texas" "Il" "W Va" "Ills" "O" "Pa Usa" "Mass Usa" "Ri" "St Croix" "Illinois" "Nebr" "Ore" "Michigan" "Pennsylvania" "New Jersey" "Oh" "Ill Usa" "Indiana" "Wis" "Brooklyn" "Ca" "Calif" "California" "Nj Usa" "Utah" "Vi" "Wyo" "Nh" "Ma" "Mich Usa" "Minnesota" "Montana" "Nyork"  "'
+foreach town of local USA {
+	replace origin_country = "United States" if (origin_country == "`town'")
 }
 
 local Venezuela `" "Ven" "'
@@ -867,77 +838,258 @@ foreach town of local Wales {
 	quietly replace origin_country = "Wales" if (origin_country == "`town'")
 }
 
-local WestIndies `" "W Indies" "'
+local WestIndies `" "West Ind" "W Ind" "W Indies" "'
 foreach town of local WestIndies {
-	quietly replace origin_country = "West Indies" if (origin_country == "`town'")
+	replace origin_country = "West Indies" if (origin_country == "`town'")
 }
 
-// Reassemble Yugoslavia - IS THIS APPROPRIATE??? - (SR Bosnia and Herzegovina, SR Croatia, SR Macedonia, SR Montenegro, SR Slovenia, and SR Serbia)
 local Yugoslavia `" "Jugo Slovakia" "J-Sl" "Yougo-Slav" "Yougoslav" "Yougo-Slavia" "Jugo-Slavia" "Y Slavia" "Yugo Slav" "Yougo-Sl" "Yugo Slavia" "Y Slav" "Jugo-Slav" "Bosnia" "Yugoslavia" "Jugoslavia" "Yougoslavia" "Jugosl" "Jugoslav" "Yougosl" "Yugo-Slav" "Jugo Slavia" "Jugo-Sl" "Yugo-Sl" "Yugo Slavish" "Jugoslv" "J Slav" "Jougosl" "Yugoslav" "Jugo Slav" "Yugosl" "Yugo-Slavia" "Yugo Sl" "Yugo-Slavia" "Y Slove" "Y-Slavia" "Yougo Slovaky" "Tcheco-Slovac" "'
 foreach town of local Yugoslavia {
 	quietly replace origin_country = "Yugoslavia" if (origin_country == "`town'")
 }
 
+
+
+
+
+
 //////////////////
 // Change the decision to be based on origin instead of origin_country
-local Barbados `" "Â Christ Church, Barbados, W. I." "Â Christ Ch, Barbados, W. I." "Â St. Thomas, Barbados, W. I." "Â Bridgetown, Barbados, W. Ind." "Â Hastings, Barbados, W. Ind." "'
+
+local Angola `" "Moxico, Africa" "'
+foreach town of local Angola {
+	replace origin_country = "Angola" if (origin == "`town'")
+}
+
+local Algeria `" "Algeri, Algeri, Africa" "Algiers, Africa" "'
+foreach town of local Algeria {
+	replace origin_country = "Algeria" if (origin == "`town'")
+}
+
+local Argentina `" "Buenos Aires, Arg. Rep., S. Amer." "B. Aires, S. Amer." "Buenos Aires, Argentina, S. Amer." "Buenos Ayres, Argentine, S. Amer." "B'Aires, So. Amer." "Buenos Aires, Rep. Arg., So. Amer." "Buenos Aries, Rep. Arg., So. Amer" "B. Aires, So. Amer." "B.A., Argentina, So. Amer." "Buenos Aires, Argentina, So Amer" "Buenos Aires, Argentine, So. Amer." "Buenos Aires, Rep. Arg., So. Amer" "Buenos Aires, So. Amer." "B. Aires, So. America" "Buenos Aires, Argentina, So. America" "Buenos Aires, So. America" "B. Aires, S. America" "Buenos Aires, S. America" "B. Aires, S. America" "Buenos Aires, S. America" "B. Aires, Argentine, S. Am." "B. Aries, S. Am." "Baradero, Argentina, So. America" "Campana, Arg, So Amer" "Buenos Ayers, South America" "Pv. Aires, South America" "'
+foreach town of local Argentina {
+	replace origin_country = "Argentina" if (origin == "`town'")
+}
+
+local Argentina `" "Buenos Aires, Argentine, So Am" "Buenos Aires, Rep. Arg., So. Am." "B. Aires, Arg. Rep, So Am" "Buenos Aires, Arg. Rep., So. Am." "Buenos Aires, Argentina, So. Am." "B. Aires, Arg Rep, So Am" "B. Aires, Argentina, So. Am." "Buenos Aires, Argentina, So Am" "Buenos Aires, Argentine, So. Am." "B'Aires, Arg., So. Am." "B. Aries, So. Am." "B. Ayres, Arges., So. Am." "B. Ayres, So. Am." "Beunos Aires, Argentine, So. Am." "Buenos Aires, Argentine, So. Am" "Buenos Aires, Argentinia, So. Am." "Buenos Aires, So. Am." "Buenos Ayres, Argentina, So Am" "Buenos Ayres, Argentine, Republic, S.." "Buenosaires, Argentina, So. Am." "Ansonia, Argentine, So. Am." "Mendoza, Arg. Rep., So. Am." "Mendoza, Argentine, So. Am." "Rosario, Arg. Rep., So. Am." "Costilie, Rep. Arg., So. Am." "'
+foreach town of local Argentina {
+	replace origin_country = "Argentina" if (origin == "`town'")
+}
+
+local Barbados `" "Christ Church, Barbados, W. I." "Christ Ch, Barbados, W. I." "St. Thomas, Barbados, W. I." "Bridgetown, Barbados, W. Ind." "Hastings, Barbados, W. Ind." "'
 foreach town of local Barbados {
 	replace origin_country = "Barbados" if (origin == "`town'")
 }
 
-local Bermuda `" "Â Hamilton, Bermuda, W I" "Â Hamilton, Bermuda, W. I." "Â Hamilton, Bermuda, W. Ind." "Â Pembroke, Bermuda, W. Ind" "Â Paget, Bermuda, W. Ind." "Â Warwick, Bermuda, W. Ind" "'
+local Bermuda `" "Hamilton, Bermuda, W I" "Hamilton, Bermuda, W. I." "Hamilton, Bermuda, W. Ind." "Pembroke, Bermuda, W. Ind" "Paget, Bermuda, W. Ind." "Warwick, Bermuda, W. Ind" "'
 foreach town of local Bermuda {
 	replace origin_country = "Bermuda" if (origin == "`town'")
 }
 
-local Cuba `" "Â Havana, Cuba, W. I." "Â Bayate, Cuba, W. I." "Â Havana, Cuba, W. Ind." "Â Havana, Cuba, W Ind." "Â Santiago, Cuba, W Ind" "Â Camaguey, Cuba, W. Ind." "'
+local Bolivia `" "La Paz, Bolivia, So. Am." "Uyuni, Bolivia, So. Am." "'
+foreach town of local Bolivia {
+	replace origin_country = "Bolivia" if (origin == "`town'")
+}
+
+local Bolivia `" "Ormro, Bolivia, S. America" "Ormro, Bolivia, S. America" "'
+foreach town of local Bolivia {
+	replace origin_country = "Bolivia" if (origin == "`town'")
+}
+
+local Brazil `" "Manaos, Brazil, So. Amer." "Curyteba, Brazil, So. Amer." "Rio De Janeiro, Brazil, So. Amer." "S Paulo, Brazil, So Amer" "Sao Paulo, Brazil, So Amer." "Recife, Brasil, So. Amer." "Rio de Janeiro, Brazil, So Amer" "Rio de Janeiro, South America" "Rio Janiero, Brazil, So. America" "Rio, S. Am." "Sao Paulo, South America" "Sao Paulo, So. Amer." "Sta. Catherina, Brazil, So. Amer." "Catharena, South America" "'
+foreach town of local Brazil {
+	replace origin_country = "Brazil" if (origin == "`town'")
+}
+
+local Brazil `" "Sao Paulo, Brazil, So. Am." "Rio de Janeiro, Brazil, So. Am." "Santos, Brazil, So. Am." "Parana, Brazil, So Am" "Petropolis, Brazil, So. Am." "Sao Paulo, Brazil, So Am" "Rio, Brazil, So. Am." "Maranhai, Brazil, So. Am." "Minas, Brazil, So. Am." "Rio de Janeiro, Brazil, So Am" "Santos Brazil, So. Am." "M. Grossa, Brazil, So. Am." "Para, Brazil, So Am" "Parana, Brazil, So. Am." "Santa Catrina, Brazil, So Am" "Sao Paolo, Brazil, So. Am." "St Paulo, Brazil, So. Am." "Rio De Janeiro, So. Am." "Rio De Janerio, Brazil, So. Am." "San Paolo, So. Am." "S. Paulo, So. Am." "Sao Paulo, So. Am." "Sao, Paulo, So. Am." "San Paulo, So Am" "San Paulo, So. Am." "'
+foreach town of local Brazil {
+	replace origin_country = "Brazil" if (origin == "`town'")
+}
+
+local Chile `" "Iquique, Chile, So. Am." "Santiago, Chili, So. Am." "Valparaiso, Chile, So. Am" "Valparaiso, Chili, So. Am." "'
+foreach town of local Chile {
+	replace origin_country = "Chile" if (origin == "`town'")
+}
+
+local Chile `" "Iquique, Chile, So. America" "Valparaiso, Chile, So America" "Santiago, Chile, So. Amer." "Santiago, So. America" "'
+foreach town of local Chile {
+	replace origin_country = "Chile" if (origin == "`town'")
+}
+
+local Colombia `" "Barranquilla, Colombia, So. Amer." "Bogota, Colombia, So. Amer." "Cartagena, Colomb., So. Amer." "Bogota, Columgia, S. Amer." "Columbia, South America" "Cartagena, S. Amer." "Sta. Maria, Col., S. Amer." "'
+foreach town of local Colombia {
+	replace origin_country = "Colombia" if (origin == "`town'")
+}
+
+local Colombia `" "Iquique, Chile, So. Am." "Santiago, Chili, So. Am." "Cucuta, Colombia, So Am" "Bogota, Colombia, So Am" "Barranquilla, Colombia, So Am" "Bogata, Colombia, So. Am." "Bogota, Columbia, So. Am." "Cartagena, Colombia, So. Am." "Girardot, Colombia, So Am" "Medellin, Columb., So. Am." "Popayan, Colombia, So Am" "Sogamoso, Colombia, So. Am." "Tumaco, Columbia, So. Am." "Bogota, So. Am." "'
+foreach town of local Colombia {
+	replace origin_country = "Colombia" if (origin == "`town'")
+}
+
+local Congo `" "Luebo, Africa" "'
+foreach town of local Congo {
+	replace origin_country = "Congo" if (origin == "`town'")
+}
+
+local CostaRica `" "San Jose, Costa Rica, So. Am." "'
+foreach town of local CostaRica {
+	replace origin_country = "CostaRica" if (origin == "`town'")
+}
+
+local Cuba `" "Havana, Cuba, W. I." "Bayate, Cuba, W. I." "Havana, Cuba, W. Ind." "Havana, Cuba, W Ind." "Santiago, Cuba, W Ind" "Camaguey, Cuba, W. Ind." "'
 foreach town of local Cuba {
 	replace origin_country = "Cuba" if (origin == "`town'")
 }
 
-local Denmark `" "Â Jutland" "'
+local Curacao `" "Curacao, So Am" "'
+foreach town of local Curacao {
+	replace origin_country = "Curacao" if (origin == "`town'")
+}
+
+local Denmark `" "Jutland" "'
 foreach town of local Denmark {
 	replace origin_country = "Denmark" if (origin == "`town'")
 }
 
-local DominicanRepublic `" "Â Plo Plata, Dom. Rep., W. I." "Â Pto Plata, St. Dom., W. I." "Â Pto Plata, W. I." "Â Sanchez, D.R., W. Ind." "'
+local DominicanRepublic `" "Plo Plata, Dom. Rep., W. I." "Pto Plata, St. Dom., W. I." "Pto Plata, W. I." "Sanchez, D.R., W. Ind." "'
 foreach town of local DominicanRepublic {
 	replace origin_country = "Dominican Republic" if (origin == "`town'")
 }
 
-local Italy `" "Â Nicastro", "Â Acri", "Â Villarosa", "Â Campobello", "Â Naso", "Â Alife" "'
+local Ecuador `" "Guayaquil, Ecuador, S. Amer." "Esmeraldas, Ecuador, S. Amer." "Guayaquil, Ecuador, So. Amer." "'
+foreach town of local Ecuador {
+	replace origin_country = "Ecuador" if (origin == "`town'")
+}
+
+local ElSalvador `" "San Salvador, S. Amer." "'
+foreach town of local ElSalvador {
+	replace origin_country = "El Salvador" if (origin == "`town'")
+}
+
+local Egypt `" "Cario, Africa" "Alescandria, Africa" "Aleseandia, Africa" "Alessandria, Africa" "Alexandrie, Africa" "Cairon, Egypte, Africa" "Cairon, Egypt, Africa" "Camp., Port Said, Africa" "Camp, Port Said, Africa" "'
+foreach town of local Egypt {
+	replace origin_country = "Egypt" if (origin == "`town'")
+}
+
+local Guyana `" "Georgetown, Brit. Guiana, So. Amer." "'
+foreach town of local Guyana {
+	replace origin_country = "Guyana" if (origin == "`town'")
+}
+
+local Guyana `" "Georgetown, Demerara, So. Am." "Demerara, So. Am." "Georgetown, Br. Gu., So. Am." "Georgetown, British Guiana, So. Am." "'
+foreach town of local Guyana {
+	replace origin_country = "Guyana" if (origin == "`town'")
+}
+
+//CHECK THE ONES THAT AREN'T CHANGING - MAYBE LEADING SPACES?
+local Italy `" "Nicastro" "Belmonte" "Altavilla" "Villarosa" "Campobello" "Bella" "Mirabella" "Salina" "Villalba" "Cermini" "Augusta" "Nola" "Meta" "Elena" "Nicastro", "Acri", "Campobello", "Naso", "Alife" "'
 foreach town of local Italy {
 	replace origin_country = "Italy" if (origin == "`town'")
 }
 
-local Jamaica `" "Â Kingston, Jamaica, W. I." "Â Devon, Jamaica, W. I." "Â Port Antonio, Jamaica, W. I." "Â Runaway Bay, Jamaica, W Ind" "Â Kingston, Jamaica , W. Ind." "Â Kingston, Ja., W. Ind." "Â Kingston, W. Ind." "'
+local Jamaica `" "Kingston, Jamaica, W. I." "Devon, Jamaica, W. I." "Port Antonio, Jamaica, W. I." "Runaway Bay, Jamaica, W Ind" "Kingston, Jamaica , W. Ind." "Kingston, Ja., W. Ind." "Kingston, W. Ind." "'
 foreach town of local Jamaica {
 	replace origin_country = "Jamaica" if (origin == "`town'")
 }
 
-local Malawi `" "Â Blantyre" "'
+local Kenya `" "Kenya, Africa" "'
+foreach town of local Kenya {
+	replace origin_country = "Kenya" if (origin == "`town'")
+}
+
+local Libya `" "Tripolis, Africa" "'
+foreach town of local Libya {
+	replace origin_country = "Libya" if (origin == "`town'")
+}
+
+local Malawi `" "Blantyre" "'
 foreach town of local Malawi {
 	replace origin_country = "Malawi" if (origin == "`town'")
 }
 
-local Portugal `" "Â Belmonte" "'
+local Norway `" "Chrsand" "'
+foreach town of local Norway {
+	replace origin_country = "Norway" if (origin == "`town'")
+}
+
+local Panama `" "Panama, S. Am." "'
+foreach town of local Panama {
+	replace origin_country = "Panama" if (origin == "`town'")
+}
+
+local Panama `" "Colon, Panama, So Am." "'
+foreach town of local Panama {
+	replace origin_country = "Panama" if (origin == "`town'")
+}
+
+local Paraguay `" "Asuncion, So. Am." "'
+foreach town of local Paraguay {
+	replace origin_country = "Paraguay" if (origin == "`town'")
+}
+
+local Paraguay `" "Para, S. America" "Para, S. America" "Paragagay, South America" "'
+foreach town of local Paraguay {
+	replace origin_country = "Paraguay" if (origin == "`town'")
+}
+
+local Peru `" "Lima, Peru, S. Am." "Lima, Peru, So America" "Cuzco, Peru, So. Amer." "Chiclayo, Peru, So. Amer." "Lima, Peru, So. Amer." "Peru, So Amer" "Callao, S. Am." "'
+foreach town of local Peru {
+	replace origin_country = "Peru" if (origin == "`town'")
+}
+
+local Peru `" "Catacaos, Peru, So. Am." "Arequipa, Peru, So. Am." "Arequipa, Peru, So Am" "Barranco, Peru, So. Am." "Lima, Peru, So. Am." "Cuzco, Peru, So Am" "Cuzco, Peru, So. Am." "Cerro de Pasco, Peru, So Am" "'
+foreach town of local Peru {
+	replace origin_country = "Peru" if (origin == "`town'")
+}
+
+local Portugal `" "Belmonte" "'
 foreach town of local Portugal {
 	replace origin_country = "Portugal" if (origin == "`town'")
 }
 
-local Switzerland `" "Â Altavilla" "'
-foreach town of local Switzerland {
-	replace origin_country = "Switzerland" if (origin == "`town'")
+local SaudiArabia `" "Madena, Africa" "'
+foreach town of local SaudiArabia {
+	replace origin_country = "Saudi Arabia" if (origin == "`town'")
 }
 
-local TheBahamas `" "Â Nassau, Bahamas, W. Ind." "'
-foreach town of local TheBahamas {
-	replace origin_country = "The Bahamas" if (origin == "`town'")
+local Scotland `" "Johnstone" "'
+foreach town of local Scotland {
+	replace origin_country = "Scotland" if (origin == "`town'")
 }
 
-local TrinidadAndTobago `" "Â Port of Spain, Trinidad, W. Ind." "Â Belmont, Trinidad, W. Ind." "Â Port of Spain, Trindad, W. Ind." "Â Port of Spain, W Ind." "Â Port of Spain, W. I." "'
-foreach town of local TrinidadAndTobago {
-	replace origin_country = "Trinidad and Tobago" if (origin == "`town'")
+local SouthAfrica `" "Cape Colony, Africa" "Durban, Africa" "Potchofetrom, Africa" "Wellington, Cape Colony, Africa" "'
+foreach town of local SouthAfrica {
+	replace origin_country = "South Africa" if (origin == "`town'")
+}
+
+local Suriname `" "Paramante, Burinam, So. Amer." "Paramaraso, Suraname, So. Amer." "Paramaribo, So Amer"  "'
+foreach town of local Suriname {
+	replace origin_country = "Suriname" if (origin == "`town'")
+}
+
+local Tunisia `" "Bezerte, Africa" "Djebel Ressas, Africa" "'
+foreach town of local Tunisia {
+	replace origin_country = "Tunisia" if (origin == "`town'")
+}
+
+local Tunisia `" "Tunisi, Africa" "Tunisia, Africa" "Tunisy, Africa" "Besaville, Tunisie, Africa" "Bizerte, Tunisie, Africa" "Bozerte, Tunis, Africa" "'
+foreach town of local Tunisia {
+	replace origin_country = "Tunisia" if (origin == "`town'")
+}
+
+local Uruguay `" "Monte Video, So. Amer." "'
+foreach town of local Uruguay {
+	replace origin_country = "Uruguay" if (origin == "`town'")
+}
+
+local Venezuela `" "Carupano, Venezuela, S. Am." "Pt. Cabello, Venezuela, South America" "Bolivar, Venezuela, S. Amer." "Caracas, So. Amer." "'
+foreach town of local Venezuela {
+	replace origin_country = "Venezuela" if (origin == "`town'")
+}
+
+local Venezuela `" "Caracas, Venezuela, So. Am." "Caracas, Venezuela, So Am" "Valencia, Venezuela, So. Am." "Coracas, Venezuela, So. Am." "Maracaibo, Venezuela, So. Am." "Marguerita Island, Venezuela, So. Am." "Merida, Venez, So. Am." "Merida, Venezuela, So Am" "Maracaibo, Venezuela, So Am" "'
+foreach town of local Venezuela {
+	replace origin_country = "Venezuela" if (origin == "`town'")
 }
 
 
@@ -947,29 +1099,85 @@ foreach town of local TrinidadAndTobago {
 
 
 
+////////////////
 
+gen IPUMS_country = origin_country
+
+local IPUMS_conversion `" "Senegal" "Algeria" "Morocco" "Malawi" "Egypt" "South Africa" "Tunisia" "Libya" "'
+foreach town of local IPUMS_conversion {
+	replace IPUMS_country = "AFRICA" if (IPUMS_country == "`town'")
+}
+
+local IPUMS_conversion `" "Australia" "New Zealand" "'
+foreach town of local IPUMS_conversion {
+	replace IPUMS_country = "Australia and New Zealand" if (IPUMS_country == "`town'")
+}
+
+local IPUMS_conversion `" "Dominican Republic" "Bahamas" "Haiti" "Barbados" "Trinidad and Tobago" "Jamaica" "Bermuda" "Saint Kitts and Nevis" "'
+foreach town of local IPUMS_conversion {
+	replace IPUMS_country = "Americas, n.s." if (IPUMS_country == "`town'")
+}
+
+local IPUMS_conversion `" "Panama" "Honduras" "Grenada" "The Bahamas" "C Am" "C Amer" "W I" "Wi" "Antigua and Barbuda" "Nicaragua" "Costa Rica" "Guatemala" "Panama" "El Salvador" "'
+foreach town of local IPUMS_conversion {
+	replace IPUMS_country = "Central America" if (IPUMS_country == "`town'")
+}
+
+local IPUMS_conversion `" "Galicia" "Jawidcze" "Shaptza" "'
+foreach town of local IPUMS_conversion {
+	replace IPUMS_country = "Eastern Europe, ns" if (IPUMS_country == "`town'")
+}
+
+local IPUMS_conversion `" "Israel" "Palestinian Territories" "'
+foreach town of local IPUMS_conversion {
+	replace IPUMS_country = "Israel/Palestine" if (IPUMS_country == "`town'")
+}
+
+local IPUMS_conversion `" "Northern Ireland" "'
+foreach town of local IPUMS_conversion {
+	replace IPUMS_country = "Northern Europe, ns" if (IPUMS_country == "`town'")
+}
+
+local IPUMS_conversion `" "Selz" "Dabar" "Mir" "Kischenew" "Georgia" "Slov" "Kulm" "Jossy" "Stanislaw" "Rus" "Macedonia" "Bosnia and Herzegovina" "Wolyn" "Moldova" "Montenegro" "Slovakia" "Slovenia" "Armenia" "Serbia" "Russia" "Ukraine" "Croatia" "Belarus" "Prussia" "'
+foreach town of local IPUMS_conversion {
+	replace IPUMS_country = "Other USSR/Russia" if (IPUMS_country == "`town'")
+}
+
+local IPUMS_conversion `" "So A" "Guyana" "Sa" "Suriname" "Curacao" "Guyana" "So America" "S Am" "S A" "S America" "S Amer" "Bolivia" "So Amer" "So Am" "Uruguay" "Ecuador" "Brazil" "Argentina" "Colombia" "Venezuela" "Peru" "Chile" "'
+foreach town of local IPUMS_conversion {
+	replace IPUMS_country = "SOUTH AMERICA" if (IPUMS_country == "`town'")
+}
+
+// Nice spelling IPUMS
+local IPUMS_conversion `" "Switzerland" "'
+foreach town of local IPUMS_conversion {
+	replace IPUMS_country = "Swizterland" if (IPUMS_country == "`town'")
+}
+
+////////////////
+
+local ZACH_LOOK_AT `" "Witkowitz" "Al"  "Newport" "Niksich" "Kronenthal" "Ha" "Galston" "H" "Alva" "Trebizonde" "Glogon" "Beresin" "Burnbank" "By" "Grodns" "Harpoot" "Johnston" "Jersey" "Kolb" "Korono" "Pico" "Resicza" "Tavricien" "Wilkomir" "Leith" "Sudan" "Sw" "W" "Gilly" "L" "Maryhill" "Gr" "Ponewesh" "Rosenberg" "Non Immigrant Alien" "St Helens" "Suwalky" "C" "Harlingen" "Speier" "Dolina" "Kandel"  "S" "Kassa" "R" "Havre" "M" "Makow"  "Frank" "A"  "Samsonn"  "South" "B" "S H S" "Hamilton" "U" "'
+foreach town of local ZACH_LOOK_AT {
+	replace IPUMS_country = "ZACH LOOK AT" if (IPUMS_country == "`town'")
+}
+
+////////////////
 
 
 
 
 //////////////////// This is the working code to work out what to clean
-// Create a flag indicating whether the origin_country is a modern country
-// CHANGE THIS TO REFER TO ZACH'S IPUMS LIST
+// Create a flag indicating whether the country is an IPUMS country
 // Instruction: So the goal is to create bpl codes for each observation. The bpl codes are from IPUMS USA and are by country of birth, which should answer some of your questions (e.g. Prussia goes to Germany, Sicily to Italy, etc.). The historical regions are usually coded at a more aggregated level. See https://usa.ipums.org/usa-action/variables/BPL#codes_section (not the detailed codes).
 // Things get tricky when dealing with World War I boundary changes in eastern Europe, especially because we're going to be relying on the 1920, 1930 and 1940 Census. Before I have aggregated countries up to pre World War I boundaries. First, I would get them into modern BPL codes and we can decide how to aggregate them later, unless you think something else is better.
-// Initial list is from http://m.state.gov/mc17517.htm, but with United States added, and some formatting ', ,, - removed. After that there are a few countries that were added (see the final line of the macro) because they are reasonable as historical countries
 // drop is_country_flag
-gen is_country_flag = .
-local list_of_countries `" "Afghanistan" "Albania" "Algeria" "Andorra" "Angola" "Antigua and Barbuda" "Argentina" "Armenia" "Aruba" "Australia" "Austria" "Azerbaijan" "Bahamas" "Bahrain" "Bangladesh" "Barbados" "Belarus" "Belgium" "Belize" "Benin" "Bhutan" "Bolivia" "'
-local list_of_countries `" `list_of_countries' "Bosnia and Herzegovina" "Botswana" "Brazil" "Brunei" "Bulgaria" "Burkina Faso" "Burma" "Burundi" "Cambodia" "Cameroon" "Canada" "Cabo Verde" "Central African Republic" "Chad" "Chile" "China" "Colombia" "Comoros" "Congo" "Congo" "Costa Rica"  "'
-local list_of_countries `" `list_of_countries' "Cote d Ivoire" "Croatia" "Cuba" "Curacao" "Cyprus" "Czech Republic" "Denmark" "Djibouti" "Dominica" "Dominican Republic" "Ecuador" "Egypt" "El Salvador" "Equatorial Guinea" "Eritrea" "Estonia" "Ethiopia" "Fiji" "Finland" "France" "Gabon" "Gambia" "'
-local list_of_countries `" `list_of_countries' "Georgia" "Germany" "Ghana" "Greece" "Grenada" "Guatemala" "Guinea" "Guinea Bissau" "Guyana" "Haiti" "Holy See" "Honduras" "Hong Kong" "Hungary" "Iceland" "India" "Indonesia" "Iran" "Iraq" "Ireland" "Israel" "Italy" "Jamaica" "Japan" "Jordan" "Kazakhstan" "'
-local list_of_countries `" `list_of_countries' "Kenya" "Kiribati" "Noth Korea" "South Korea" "Kosovo" "Kuwait" "Kyrgyzstan" "Laos" "Latvia" "Lebanon" "Lesotho" "Liberia" "Libya" "Liechtenstein" "Lithuania" "Luxembourg" "Macau" "Macedonia" "Madagascar" "Malawi" "Malaysia" "Maldives" "Mali" "Malta" "'
-local list_of_countries `" `list_of_countries' "Marshall Islands" "Mauritania" "Mauritius" "Mexico" "Micronesia" "Moldova" "Monaco" "Mongolia" "Montenegro" "Morocco" "Mozambique" "Namibia" "Nauru" "Nepal" "Netherlands" "Netherlands Antilles" "New Zealand" "Nicaragua" "Niger" "Nigeria" "North Korea" "'
-local list_of_countries `" `list_of_countries' "Norway" "Oman" "Pakistan" "Palau" "Palestinian Territories" "Panama" "Papua New Guinea" "Paraguay" "Peru" "Philippines" "Poland" "Portugal" "Qatar" "Romania" "Russia" "Rwanda" "Saint Kitts and Nevis" "Saint Lucia" "Saint Vincent and the Grenadines" "Samoa" "'
-local list_of_countries `" `list_of_countries' "San Marino" "Sao Tome and Principe" "Saudi Arabia" "Senegal" "Serbia" "Seychelles" "Sierra Leone" "Singapore" "Sint Maarten" "Slovakia" "Slovenia" "Solomon Islands" "Somalia" "South Africa" "South Korea" "South Sudan" "Spain" "Sri Lanka" "Sudan" "Suriname" "'
-local list_of_countries `" `list_of_countries' "Swaziland" "Sweden" "Switzerland" "Syria" "Taiwan" "Tajikistan" "Tanzania" "Thailand" "Timor Leste" "Togo" "Tonga" "Trinidad and Tobago" "Tunisia" "Turkey" "Turkmenistan" "Tuvalu" "Uganda" "Ukraine" "United Arab Emirates" "United Kingdom" "Uruguay" "Uzbekistan" "Vanuatu" "Venezuela" "Vietnam" "Yemen" "Zambia" "Zimbabwe" "'
-local list_of_countries `" `list_of_countries' "United States" "Galicia" "'
+// drop is_IPUMS_flag
+gen is_IPUMS_flag = .
+local list_of_countries `" "United States" "Guam" "Puerto Rico" "U.S. Virgin Islands" "Canada" "St. Pierre and Miquelon" "Atlantic Islands" "North America, ns" "Mexico" "Central America" "Cuba" "West Indies" "Americas, n.s." "South America" "Denmark" "Finland" "Iceland" "Lapland, n.s." "Norway" "Sweden" "England" "Scotland" "Wales" "United Kingdom, ns" "Ireland" "Northern Europe, ns" "Belgium" "France" "Liechtenstein" "Luxembourg" "Monaco" "Netherlands" "Swizterland" "Western Europe, ns" "Albania" "Andorra" "Gibraltar" "Greece" "Italy" "Malta" "Portugal" "San Marino" "Spain" "Vatican City" "Southern Europe, ns" "Austria" "Bulgaria" "Czechoslovakia" "Germany" "Hungary" "Poland" "Romania" "Yugoslavia" "Central Europe, ns" "Eastern Europe, ns" "Estonia" "Latvia" "Lithuania" "Baltic States, ns" "Other USSR/Russia" "Europe, ns" "China" "Japan" "Korea" "East Asia, ns" "Brunei" "Cambodia (Kampuchea)" "Indonesia" "Laos" "Malaysia" "Philippines" "Singapore" "Thailand" "Vietnam" "Southeast Asia, ns" "Afghanistan" "India" "Iran" "Maldives" "Nepal" "Bahrain" "Cyprus" "Iraq" "Iraq/Saudi Arabia" "Israel/Palestine" "Jordan" "Kuwait" "Lebanon" "Oman" "Qatar" "Saudi Arabia" "Syria" "Turkey" "United Arab Emirates" "Yemen Arab Republic (North)" "Yemen, PDR (South)" "Persian Gulf States, n.s." "Middle East, ns" "Southwest Asia, nec/ns" "Asia Minor, ns" "South Asia, nec" "Asia, nec/ns" "Africa" "Australia and New Zealand" "Pacific Islands" "Antarctica, ns/nec" "Abroad (unknown) or at sea" "Other n.e.c." "Missing/blank" "SOUTH AMERICA" "AFRICA"  "'
+// Iterate through the list of countries and add a flag if it's not a country.  
+foreach country of local list_of_countries {
+	quietly replace is_IPUMS_flag = 1 if (IPUMS_country == "`country'") 
+}
 
 // Use this to list the countries that need to be looked at
 // drop country_frequency
@@ -977,269 +1185,27 @@ egen country_frequency = count(1), by(origin_country)
 gsort -country_frequency origin_country
 
 // Get a list of rows to clean
-tab origin_country if country_frequency > 10 & missing(is_country_flag), sort
+tab IPUMS_country if country_frequency == 10 & missing(is_IPUMS_flag), sort
+
+tab origin_country if country_frequency > 10, sort
+
+
 
 // Use this to get the data that you need in order to fix origin
-foreach country of local LookingAt {
-	tab origin if origin_country == "`country'", sort
-}
 
+local LookingAt `"   "'
 foreach country of local LookingAt {
 	tab origin if origin_country == "`country'", sort
-	tab origin_city if origin_country == "`country'", sort
+	//tab origin_city if origin_country == "`country'", sort
 	tab ethnicity if origin_country == "`country'"
 }
+ 
 
-// Look at these next:
-                                So Am |        265        0.65       84.62
-                                  S H S |        242        0.60       85.22
-                                   Russ |        222        0.55       85.76
-                                     Wi |        150        0.37       86.13
-                                  Wolyn |        138        0.34       86.48
-                                So Amer |        107        0.26       86.74
-                               Hamilton |        100        0.25       86.99
-                                 Africa |         99        0.24       87.23
-                                  Patti |         97        0.24       87.47
-                                 Tyrone |         95        0.23       87.71
-                                 Persia |         94        0.23       87.94
-                                Prussia |         87        0.21       88.15
-                                   Alia |         86        0.21       88.37
-                                  Bella |         80        0.20       88.56
-                                    Rus |         73        0.18       88.74
-                                      U |         68        0.17       88.91
-                                  Norka |         58        0.14       89.06
-                                Bancina |         57        0.14       89.20
-                                   Nola |         54        0.13       89.33
-                                Augusta |         53        0.13       89.46
-                                   Meta |         52        0.13       89.59
-                                  Elena |         50        0.12       89.71
-                                Neudorf |         48        0.12       89.83
-                                     Ta |         48        0.12       89.95
-                            West Indies |         48        0.12       90.07
-                                 Salina |         47        0.12       90.18
-                              Mirabella |         46        0.11       90.30
-                    Non Immigrant Alien |         46        0.11       90.41
-                              Stanislaw |         46        0.11       90.53
-                                    T A |         45        0.11       90.64
-                               Villalba |         45        0.11       90.75
-                                Cermini |         43        0.11       90.85
-                                  South |         43        0.11       90.96
-                                Chrsand |         42        0.10       91.06
-                              Johnstone |         42        0.10       91.17
-                                      B |         41        0.10       91.27
-                                  Jossy |         40        0.10       91.37
-                                    Pos |         40        0.10       91.47
-                                   Tusa |         40        0.10       91.57
-                               Contessa |         37        0.09       91.66
-                             Laurenzano |         37        0.09       91.75
-                                Parenti |         36        0.09       91.84
-                              St Helens |         36        0.09       91.93
-                                    Pol |         35        0.09       92.01
-                                  Austr |         34        0.08       92.10
-                                     Sa |         34        0.08       92.18
-                                  Pirie |         33        0.08       92.26
-                                 Dudley |         32        0.08       92.34
-                                   Lago |         32        0.08       92.42
-                                   Lens |         32        0.08       92.50
-                                  Maida |         32        0.08       92.58
-                                  Prata |         32        0.08       92.66
-                                Suwalky |         32        0.08       92.74
-                                  A'Dam |         31        0.08       92.81
-                                      C |         31        0.08       92.89
-                            Valledolino |         31        0.08       92.97
-                              Harlingen |         30        0.07       93.04
-                                   Rodi |         30        0.07       93.12
-                                 Kandel |         29        0.07       93.19
-                             Monteleone |         29        0.07       93.26
-                                Potenzo |         29        0.07       93.33
-                                   Rose |         29        0.07       93.40
-                                      S |         29        0.07       93.47
-                               Bukowina |         28        0.07       93.54
-                                  Kassa |         28        0.07       93.61
-                                   Slov |         28        0.07       93.68
-                                Paterno |         27        0.07       93.75
-                                      R |         27        0.07       93.81
-                                 Roseto |         27        0.07       93.88
-                                 Tarsia |         27        0.07       93.95
-                                  Canna |         26        0.06       94.01
-                                   Sora |         26        0.06       94.08
-                                 Speier |         26        0.06       94.14
-                                 Dolina |         25        0.06       94.20
-                                    S A |         25        0.06       94.26
-                            The Bahamas |         25        0.06       94.33
-                                    Csl |         24        0.06       94.39
-                                  Havre |         24        0.06       94.44
-                                   Kulm |         24        0.06       94.50
-                               Monaghan |         24        0.06       94.56
-                                Ansonia |         23        0.06       94.62
-                                      M |         23        0.06       94.68
-                                  Makow |         23        0.06       94.73
-                                  Pyrus |         23        0.06       94.79
-                                 S Amer |         23        0.06       94.85
-                                    W I |         23        0.06       94.90
-                                  Frank |         22        0.05       94.96
-                                Terseke |         22        0.05       95.01
-                                Gallina |         21        0.05       95.07
-                               Ottaiano |         21        0.05       95.12
-                                Sealand |         21        0.05       95.17
-                                      A |         20        0.05       95.22
-                                  Damas |         20        0.05       95.27
-                                Samsonn |         20        0.05       95.32
-                              St George |         20        0.05       95.37
-                                   Vita |         20        0.05       95.42
-                               Caltanis |         19        0.05       95.46
-                                Cotenza |         19        0.05       95.51
-                          Elisabethgrad |         19        0.05       95.56
-                                Erapani |         19        0.05       95.60
-                              Kischenew |         19        0.05       95.65
-                                  Leith |         19        0.05       95.70
-                             Schoondyke |         19        0.05       95.74
-                             So America |         19        0.05       95.79
-                          South America |         19        0.05       95.84
-                               West Ind |         19        0.05       95.89
-                                 Aleamo |         18        0.04       95.93
-                                  Ceora |         18        0.04       95.97
-                                Crapani |         18        0.04       96.02
-                               Ferenini |         18        0.04       96.06
-                               Kenouria |         18        0.04       96.11
-                                    Mir |         18        0.04       96.15
-                                   Mora |         18        0.04       96.20
-                              Rosenberg |         18        0.04       96.24
-                                 S Fili |         18        0.04       96.29
-                                 Stella |         18        0.04       96.33
-                                     Sw |         18        0.04       96.37
-                                 C Amer |         17        0.04       96.42
-                             Christiana |         17        0.04       96.46
-                                  Dabar |         17        0.04       96.50
-                                Piracus |         17        0.04       96.54
-                               Ponewesh |         17        0.04       96.58
-                                Sercara |         17        0.04       96.63
-                             Stmichaels |         17        0.04       96.67
-                                  Bacan |         16        0.04       96.71
-                               Borislaw |         16        0.04       96.75
-                               Campagua |         16        0.04       96.79
-                                     Gr |         16        0.04       96.83
-                                  Jessy |         16        0.04       96.87
-                                      L |         16        0.04       96.91
-                               Maryhill |         16        0.04       96.95
-                                  Mitan |         16        0.04       96.99
-                                   Naro |         16        0.04       97.02
-                                Sciacea |         16        0.04       97.06
-                                   Selz |         16        0.04       97.10
-                                Baghena |         15        0.04       97.14
-                               Calliano |         15        0.04       97.18
-                                  Gallo |         15        0.04       97.22
-                                  Gilly |         15        0.04       97.25
-                               Jawidcze |         15        0.04       97.29
-                                     La |         15        0.04       97.33
-                             Montebello |         15        0.04       97.36
-                                      W |         15        0.04       97.40
-                                  Basso |         14        0.03       97.43
-                               Burnbank |         14        0.03       97.47
-                                     By |         14        0.03       97.50
-                                Czerkas |         14        0.03       97.54
-                                 Foggio |         14        0.03       97.57
-                                 Grodns |         14        0.03       97.61
-                                Harpoot |         14        0.03       97.64
-                                     Ia |         14        0.03       97.68
-                               Johnston |         14        0.03       97.71
-                                 Kalish |         14        0.03       97.75
-                                  Kovna |         14        0.03       97.78
-                                     Rp |         14        0.03       97.82
-                        S Giuseppe Tato |         14        0.03       97.85
-                                Sarotow |         14        0.03       97.88
-                              Staranger |         14        0.03       97.92
-                                Tenanni |         14        0.03       97.95
-                                Tennini |         14        0.03       97.99
-                             Tripolitza |         14        0.03       98.02
-                                  Wilma |         14        0.03       98.06
-                                   Asia |         13        0.03       98.09
-                                   Cava |         13        0.03       98.12
-                          Christiansund |         13        0.03       98.15
-                           Elisawetgrad |         13        0.03       98.19
-                                 Frabia |         13        0.03       98.22
-                                 Hungar |         13        0.03       98.25
-                                 Jersey |         13        0.03       98.28
-                                   Kolb |         13        0.03       98.31
-                                 Korono |         13        0.03       98.35
-                                     Oe |         13        0.03       98.38
-                                   Osch |         13        0.03       98.41
-                                   Pico |         13        0.03       98.44
-                                Resicza |         13        0.03       98.48
-                                   Riva |         13        0.03       98.51
-                                   S Am |         13        0.03       98.54
-                          S Angelo Lomb |         13        0.03       98.57
-                                Solmona |         13        0.03       98.60
-                              Tavricien |         13        0.03       98.64
-                                  W Ind |         13        0.03       98.67
-                               Wilkomir |         13        0.03       98.70
-                               Alessand |         12        0.03       98.73
-                            Archipelago |         12        0.03       98.76
-                               Begrouth |         12        0.03       98.79
-                                Beresin |         12        0.03       98.82
-                               Boriphan |         12        0.03       98.85
-                              Delianova |         12        0.03       98.88
-                               Francais |         12        0.03       98.91
-                                    Fwi |         12        0.03       98.94
-                                 Glogon |         12        0.03       98.97
-                               Hastings |         12        0.03       99.00
-                           Marsiconnovo |         12        0.03       99.03
-                                Melissa |         12        0.03       99.06
-                                   Novi |         12        0.03       99.09
-                          Oliveto Citro |         12        0.03       99.12
-                              S America |         12        0.03       99.14
-                                   So A |         12        0.03       99.17
-                             Trebizonde |         12        0.03       99.20
-                                 Trenta |         12        0.03       99.23
-                                 Vietri |         12        0.03       99.26
-                              Witkowitz |         12        0.03       99.29
-                                     Al |         11        0.03       99.32
-                                   Alva |         11        0.03       99.35
-                              Bialostok |         11        0.03       99.37
-                         British Guiana |         11        0.03       99.40
-                                   C Am |         11        0.03       99.43
-                                 Canamo |         11        0.03       99.46
-                                  Capna |         11        0.03       99.48
-                          Capriati Volt |         11        0.03       99.51
-                                Cegiano |         11        0.03       99.54
-                                Galston |         11        0.03       99.57
-                                      H |         11        0.03       99.59
-                                     Ha |         11        0.03       99.62
-                              Halbstadt |         11        0.03       99.65
-                                  Isola |         11        0.03       99.67
-                               Kamenitz |         11        0.03       99.70
-                                 Koretz |         11        0.03       99.73
-                             Kronenthal |         11        0.03       99.76
-                               Montrone |         11        0.03       99.78
-                                  Motta |         11        0.03       99.81
-                                Newport |         11        0.03       99.84
-                                Niksich |         11        0.03       99.86
-                               Palerino |         11        0.03       99.89
-                             Petersburg |         11        0.03       99.92
-                              Porsgrund |         11        0.03       99.95
-                                 S Lupo |         11        0.03       99.97
-                                Shaptza |         11        0.03      100.00
+ 
 
 
 
 
-
-
-
-
-// Get a count of the total number of rows that are reasonable
-tab origin_country if !missing(is_country_flag) | !missing(is_reasonable_flag)
-
-
-//////////////////// DECISIONS
-// Should we reassemble Great Britain or better separated?	
-// Not sure what to do with Russ vs Rus	
-// Need to separate the different countries caught up in So Am and So Amer
-// Have left Prussia as a country, not sure if want to integrate into Germany or leave separate
-// Come back to: Curland, Austr, Pos, Massa, Pol, Styria, Ta, Rssia, Rusfia, Csl, T A, Ekaterinoslaw, GR, Istria, Slov, A, Archipelago, Archipelagos, Austria Hungary, B'Da
-// W I is West Indies, but need to look at where to put them
-// Bukowina is split between Romania and Ukraine these days - not sure how to deal with that
-////////////////////
 
 
 
@@ -1248,27 +1214,19 @@ tab origin_country if !missing(is_country_flag) | !missing(is_reasonable_flag)
 // This will fill empty countries based on given cities, for instance, if the city was Sydney then it would fill Australia, but the relationship needs to be unique, which requires lots of cleaning.
 
 // Change the formatting
-encode origin_city, gen(n_origin_city)
-encode origin_country, gen(n_origin_country)
+//encode origin_city, gen(n_origin_city)
+//encode origin_country, gen(n_origin_country)
 
 // Find the ones that are not unique
-capture ssc install egenmore
+//capture ssc install egenmore
 //drop countries
-bys origin_city: egen countries = nvals(origin_country)
+//bys origin_city: egen countries = nvals(origin_country)
 // Look for: countries>1
 
-tab countries, sort
+//tab countries, sort
 
-tab origin_city if countries == 1 & missing(origin_country), sort
+//tab origin_city if countries == 1 & missing(origin_country), sort
 
 // Do the actual filling
-net from http://www.sealedenvelope.com/
-xfill origin_country, i(n_origin_city)
-
-
-
-
-
-
-
-
+//net from http://www.sealedenvelope.com/
+//xfill origin_country, i(n_origin_city)
