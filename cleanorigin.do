@@ -31,8 +31,16 @@ set more off
 //use "/hdir/0/monicah/Desktop/EIbrothers18921924.dta"
 //cd "/hdir/0/monicah/Desktop/All"
 
+/*
 use "/Users/rohanalexander/Desktop/EIbrothers18921924.dta"
 cd "/Users/rohanalexander/Desktop"
+*/
+
+cd "C:\Users\Zach\Google Drive\EI18921924\Stata_files\brothers"
+
+use "EIbrothers18921924.dta"
+
+
 
 //////////////////////// Start separating the cities and countries ////////////////////////
 // Get rid of the special character
@@ -1058,6 +1066,7 @@ foreach town of local Portugal {
 	replace origin_country = "Portugal" if (origin == "`town'")
 }
 
+
 local Russia `" "Kulm" "Kischenew" "Mir" "'
 foreach town of local Russia {
 	replace origin_country = "Russia" if (origin == "`town'")
@@ -1123,12 +1132,6 @@ foreach town of local Venezuela {
 	replace origin_country = "Venezuela" if (origin == "`town'")
 }
 
-
-
-
-
-
-
 ////////////////
 
 local COME_BACK_TO_THESE `" "Wi" "Sa" "Africa" "Witkowitz" "Al"  "Newport" "Niksich" "Kronenthal" "Ha" "Galston" "H" "Alva" "Trebizonde" "Glogon" "Beresin" "Burnbank" "By" "Grodns" "Harpoot" "Johnston" "Jersey" "Kolb" "Korono" "Pico" "Resicza" "Tavricien" "Wilkomir" "Leith" "Sudan" "Sw" "W" "Gilly" "L" "Maryhill" "Gr" "Ponewesh" "Rosenberg" "Non Immigrant Alien" "St Helens" "Suwalky" "C" "Harlingen" "Speier" "Dolina" "Kandel"  "S" "Kassa" "R" "Havre" "M" "Makow"  "Frank" "A"  "Samsonn"  "South" "B" "S H S" "Hamilton" "U" "'
@@ -1136,15 +1139,11 @@ foreach town of local COME_BACK_TO_THESE {
 	replace origin_country = "COME_BACK_TO_THESE" if (origin_country == "`town'")
 }
 
-
-
-
-
-
-
 ////////////////
 //drop IPUMS_country
 gen IPUMS_country = origin_country
+
+replace IPUMS_country="Poland" if origin_country=="Galicia"
 
 local IPUMS_conversion `" "Senegal" "Algeria" "Morocco" "Malawi" "Egypt" "South Africa" "Tunisia" "Libya" "'
 foreach town of local IPUMS_conversion {
@@ -1166,7 +1165,7 @@ foreach town of local IPUMS_conversion {
 	replace IPUMS_country = "Central America" if (IPUMS_country == "`town'")
 }
 
-local IPUMS_conversion `" "Galicia" "Jawidcze" "Shaptza" "'
+local IPUMS_conversion `" "Jawidcze" "Shaptza" "'
 foreach town of local IPUMS_conversion {
 	replace IPUMS_country = "Eastern Europe, ns" if (IPUMS_country == "`town'")
 }
@@ -1185,6 +1184,9 @@ local IPUMS_conversion `" "Selz" "Dabar" "Mir" "Kischenew" "Georgia" "Slov" "Kul
 foreach town of local IPUMS_conversion {
 	replace IPUMS_country = "Other USSR/Russia" if (IPUMS_country == "`town'")
 }
+
+
+
 
 local IPUMS_conversion `" "So A" "Guyana" "Sa" "Suriname" "Curacao" "Guyana" "So America" "S Am" "S A" "S America" "S Amer" "Bolivia" "So Amer" "So Am" "Uruguay" "Ecuador" "Brazil" "Argentina" "Colombia" "Venezuela" "Peru" "Chile" "'
 foreach town of local IPUMS_conversion {
@@ -1238,13 +1240,30 @@ foreach country of local LookingAt {
 	tab ethnicity if origin_country == "`country'"
 }
  
-
-
-
  
+ /* [ZW - Oct 10] 
+ Below are additional changes. I've resaved the do file under a new name so as not 
+ to lose prior work. The following matches bpl and mtongue codes from IPUMS in order
+ to match with the IPUMS full-count censuses
+ */
+ 
+merge m:1 IPUMS_country using "C:\Users\Zach\Google Drive\EI18921924\Stata_files\bplmatch.dta"
+drop if _merge==2
+drop _merge
+
+gen ethnicitymatch=ethnicity
+
+merge m:1 ethnicitymatch using "C:\Users\Zach\Google Drive\EI18921924\Stata_files\mtonguematch.dta", update
+drop if _merge==2
+
+replace ethnicitymatch=second_ethnicity if bpl==.
+
+drop _merge
+merge m:1 ethnicitymatch using "C:\Users\Zach\Google Drive\EI18921924\Stata_files\mtonguematch.dta", update
+drop if _merge==2
 
 
-
+save EIbrothersbpl.dta, replace
 
 /////// DEBRIS //////////
 
